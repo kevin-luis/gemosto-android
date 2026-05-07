@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand -->
+    <string name="app_name">Gemosto</string>
+    <string name="app_tagline">Pendamping kesehatan lutut Anda</string>
+
+    <!-- Common Actions -->
+    <string name="action_back">Kembali</string>
+    <string name="action_close">Tutup</string>
+    <string name="action_continue">Lanjutkan</string>
+    <string name="action_cancel">Batal</string>
+    <string name="action_save">Simpan</string>
+    <string name="action_done">Selesai</string>
+    <string name="action_retry">Coba Lagi</string>
+    <string name="action_settings">Pengaturan</string>
+
+    <!-- Welcome / Onboarding -->
+    <string name="welcome_title">Selamat datang di Gemosto</string>
+    <string name="welcome_subtitle">Pendamping kesehatan lutut Anda — ukur ROM, dapatkan latihan terpersonalisasi.</string>
+    <string name="welcome_signin_google">Masuk dengan Google</string>
+    <string name="welcome_disclaimer">Dengan masuk, Anda menyetujui aplikasi ini bukan pengganti diagnosis dokter.</string>
+
+    <!-- Disclaimer -->
+    <string name="disclaimer_short">Hasil ini bukan pengganti diagnosis dokter. Konsultasi tenaga medis untuk evaluasi lebih lanjut.</string>
+
+    <!-- Errors (generic) -->
+    <string name="error_generic">Terjadi kesalahan. Silakan coba lagi.</string>
+    <string name="error_no_internet">Tidak ada koneksi internet.</string>
+    <string name="error_login_canceled">Login dibatalkan.</string>
+    <string name="error_login_failed">Login gagal. Silakan coba lagi.</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">Beranda</string>
+    <string name="nav_exercise">Latihan</string>
+    <string name="nav_scan">Scan</string>
+    <string name="nav_history">Riwayat</string>
+    <string name="nav_account">Akun</string>
+
+    <!-- Onboarding — Profile Setup (Hari 3 / spec 001) -->
+    <string name="onboarding_profile_title">Profil Anda</string>
+    <string name="onboarding_profile_intro">Sebelum mulai, beri tahu kami sedikit tentang Anda agar latihan bisa disesuaikan.</string>
+
+    <string name="onboarding_field_name">Nama</string>
+    <string name="onboarding_name_error">Nama harus 2-50 karakter</string>
+
+    <string name="onboarding_field_age">Umur (tahun)</string>
+    <string name="onboarding_field_age_helper">Antara 18 sampai 100 tahun</string>
+    <string name="onboarding_age_error_range">Umur harus antara 18 dan 100 tahun</string>
+
+    <string name="onboarding_section_knee">Lutut yang bermasalah</string>
+    <string name="onboarding_knee_left">Kiri</string>
+    <string name="onboarding_knee_right">Kanan</string>
+    <string name="onboarding_knee_both">Keduanya</string>
+
+    <string name="onboarding_section_activity">Level aktivitas Anda</string>
+    <string name="onboarding_activity_low">Rendah</string>
+    <string name="onboarding_activity_low_desc">Jarang olahraga, banyak duduk</string>
+    <string name="onboarding_activity_moderate">Sedang</string>
+    <string name="onboarding_activity_moderate_desc">Olahraga ringan 1-2x/minggu</string>
+    <string name="onboarding_activity_active">Aktif</string>
+    <string name="onboarding_activity_active_desc">Rutin olahraga 3+x/minggu</string>
+
+    <string name="onboarding_disclaimer_check">Saya mengerti aplikasi ini adalah alat bantu edukasi, bukan pengganti diagnosis dokter.</string>
+
+    <string name="onboarding_action_finish">Selesai</string>
+    <string name="onboarding_action_signout">Keluar (testing)</string>
+
+    <string name="onboarding_save_failed">Gagal menyimpan profil. Periksa koneksi internet.</string>
+</resources>
