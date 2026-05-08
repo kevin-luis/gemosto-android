@@ -17,6 +17,7 @@ import com.gemosto.feature.AppViewModel
 import com.gemosto.feature.home.HomeViewModel
 import com.gemosto.feature.onboarding.ProfileSetupViewModel
 import com.gemosto.feature.onboarding.WelcomeViewModel
+import com.gemosto.feature.scan.ScanViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -67,6 +68,7 @@ val appModule = module {
     viewModel { WelcomeViewModel(get(), get()) }
     viewModel { ProfileSetupViewModel(get(), get(), get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
+    viewModel { ScanViewModel() }
 
     // viewModel { HomeViewModel(get(), get(), get(), get()) }  // Hari 4
     // viewModel { RomCameraViewModel(get(), get(), get()) }    // Hari 5-7
