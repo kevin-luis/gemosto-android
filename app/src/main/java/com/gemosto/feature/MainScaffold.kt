@@ -74,7 +74,10 @@ fun MainScaffold(
                 onOpenHistory = { currentTab = MainTab.HISTORY },
             )
             MainTab.EXERCISE -> ExerciseTabScreen(paddingValues = padding)
-            MainTab.SCAN -> ScanTabScreen(paddingValues = padding)
+            MainTab.SCAN -> ScanTabScreen(
+                paddingValues = padding,
+                profile = profile,
+            )
             MainTab.HISTORY -> HistoryTabScreen(paddingValues = padding)
             MainTab.ACCOUNT -> AccountTabScreen(
                 paddingValues = padding,
