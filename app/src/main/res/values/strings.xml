@@ -66,4 +66,23 @@
     <string name="onboarding_action_signout">Keluar (testing)</string>
 
     <string name="onboarding_save_failed">Gagal menyimpan profil. Periksa koneksi internet.</string>
+
+    <!-- Scan ROM — Hari 5 (spec 002) -->
+    <string name="scan_intro_title">Scan ROM Lutut</string>
+    <string name="scan_intro_section_prep">Persiapan Scan</string>
+    <string name="scan_intro_section_prep_subtitle">Pastikan beberapa hal berikut sebelum mulai:</string>
+    <string name="scan_intro_check_seat">Duduk di kursi tanpa sandaran punggung</string>
+    <string name="scan_intro_check_distance">Letakkan HP di tripod / sandarkan stabil ~1.5 meter di depan Anda</string>
+    <string name="scan_intro_check_visible">Pastikan lutut yang akan diukur terlihat penuh dari sisi samping</string>
+    <string name="scan_intro_check_lighting">Pencahayaan cukup, gunakan celana pendek atau longgar</string>
+    <string name="scan_intro_section_knee_to_measure">Lutut yang akan diukur</string>
+    <string name="scan_intro_action_ready">Saya siap, mulai scan</string>
+
+    <!-- Scan camera permission -->
+    <string name="scan_camera_perm_title">Izin Kamera Diperlukan</string>
+    <string name="scan_camera_perm_rationale">Gemosto butuh akses kamera untuk mengukur rentang gerak lutut Anda. Tidak ada video atau foto yang disimpan — hanya sudut yang dihitung di perangkat Anda.</string>
+    <string name="scan_camera_perm_request_again">Beri Izin Kamera</string>
+    <string name="scan_camera_perm_denied_title">Izin Kamera Ditolak</string>
+    <string name="scan_camera_perm_denied_body">Untuk melakukan scan ROM, izinkan akses kamera dari Pengaturan aplikasi.</string>
+    <string name="scan_camera_perm_open_settings">Buka Pengaturan</string>
 </resources>
