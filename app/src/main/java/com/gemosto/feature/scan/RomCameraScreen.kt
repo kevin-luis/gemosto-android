@@ -221,6 +221,13 @@ private fun CameraPreviewBox(
             modifier = Modifier.fillMaxSize(),
         )
 
+        // Landmark overlay — di-stack di atas preview, di bawah UI controls.
+        PoseLandmarkOverlay(
+            kneeSide = kneeSide,
+            poseDetector = poseDetector,
+            modifier = Modifier.fillMaxSize(),
+        )
+
         // Top overlay: status badge + close
         TopOverlay(
             kneeSideLabel = when (kneeSide) {
@@ -420,7 +427,8 @@ private fun BottomInstruction() {
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Sesi 2-fase (extension + flexion) akan diaktifkan Hari 7-8.",
+                    text = "Titik hijau menandakan landmark terdeteksi jelas. Sesi 2-fase " +
+                        "(extension + flexion) akan diaktifkan Hari 8.",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = Color.White.copy(alpha = 0.85f),
                     ),

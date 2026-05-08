@@ -13,12 +13,18 @@ import com.gemosto.domain.rom.Point2D
  *
  * `visibility[i]` 0..1 — confidence landmark i terlihat.
  *
- * Empty list → no pose detected.
+ * `imageWidth` & `imageHeight` adalah dimensi frame setelah rotasi
+ * (sama dengan yang dilihat user di PreviewView). Dipakai untuk transform
+ * koordinat normalized → screen pixel di overlay drawing.
+ *
+ * Empty list landmarks → no pose detected.
  */
 data class PoseDetection(
     val landmarks: List<Point2D>,
     val visibility: List<Float>,
     val timestampMs: Long,
+    val imageWidth: Int,
+    val imageHeight: Int,
 ) {
     companion object {
         const val LEFT_HIP = 23
@@ -28,7 +34,7 @@ data class PoseDetection(
         const val LEFT_ANKLE = 27
         const val RIGHT_ANKLE = 28
 
-        val EMPTY = PoseDetection(emptyList(), emptyList(), 0L)
+        val EMPTY = PoseDetection(emptyList(), emptyList(), 0L, 0, 0)
     }
 
     fun isEmpty(): Boolean = landmarks.isEmpty()
