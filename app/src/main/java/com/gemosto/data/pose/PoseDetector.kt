@@ -97,6 +97,11 @@ class PoseDetector {
             } else {
                 bitmap
             }
+            // Simpan dimensi rotated frame — dipakai overlay drawing untuk
+            // koordinat transform (normalized [0,1] → screen pixel).
+            lastImageWidth = rotated.width
+            lastImageHeight = rotated.height
+
             val mpImage = BitmapImageBuilder(rotated).build()
 
             // Timestamp wajib monoton increasing untuk LIVE_STREAM mode.
@@ -109,20 +114,31 @@ class PoseDetector {
         }
     }
 
+    @Volatile private var lastImageWidth: Int = 0
+    @Volatile private var lastImageHeight: Int = 0
+
     private fun onResult(result: PoseLandmarkerResult, mpImage: com.google.mediapipe.framework.image.MPImage) {
         val poses = result.landmarks()
         val visibility = result.worldLandmarks()    // alternative
         val timestamp = result.timestampMs()
 
+        val imgW = lastImageWidth
+        val imgH = lastImageHeight
+
         if (poses.isEmpty() || poses[0].isEmpty()) {
-            _detections.tryEmit(PoseDetection.EMPTY.copy(timestampMs = timestamp))
+            _detections.tryEmit(
+                PoseDetection.EMPTY.copy(
+                    timestampMs = timestamp,
+                    imageWidth = imgW,
+                    imageHeight = imgH,
+                )
+            )
             return
         }
 
         val firstPose = poses[0]
         val points = firstPose.map { lm -> Point2D(lm.x(), lm.y()) }
         val visibilities = firstPose.map { lm ->
-            // visibility() optional di Optional<Float>
             lm.visibility().orElse(0f) ?: 0f
         }
 
@@ -131,6 +147,8 @@ class PoseDetector {
                 landmarks = points,
                 visibility = visibilities,
                 timestampMs = timestamp,
+                imageWidth = imgW,
+                imageHeight = imgH,
             )
         )
     }
