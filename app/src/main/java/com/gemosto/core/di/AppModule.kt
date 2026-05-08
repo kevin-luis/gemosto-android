@@ -12,6 +12,7 @@ import com.gemosto.data.firestore.FirestoreProfileRepository
 import com.gemosto.data.firestore.FirestoreRomRepository
 import com.gemosto.data.firestore.ProfileRepository
 import com.gemosto.data.firestore.RomRepository
+import com.gemosto.data.pose.PoseDetector
 import com.gemosto.data.prefs.UserPrefs
 import com.gemosto.feature.AppViewModel
 import com.gemosto.feature.home.HomeViewModel
@@ -50,6 +51,7 @@ val appModule = module {
     single<RomRepository> { FirestoreRomRepository(get()) }
     single<ExerciseRepository> { FirestoreExerciseRepository(get()) }
     single { UserPrefs(androidContext()) }
+    single { PoseDetector() }
 
     // GoogleSignInClient — webClientId di-resolve dari resource
     // yang auto-generated oleh google-services plugin dari google-services.json.
@@ -68,7 +70,7 @@ val appModule = module {
     viewModel { WelcomeViewModel(get(), get()) }
     viewModel { ProfileSetupViewModel(get(), get(), get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
-    viewModel { ScanViewModel() }
+    viewModel { ScanViewModel(get()) }
 
     // viewModel { HomeViewModel(get(), get(), get(), get()) }  // Hari 4
     // viewModel { RomCameraViewModel(get(), get(), get()) }    // Hari 5-7

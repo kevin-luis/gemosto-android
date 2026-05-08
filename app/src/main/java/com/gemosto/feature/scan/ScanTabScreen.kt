@@ -53,6 +53,7 @@ fun ScanTabScreen(
                 RomCameraScreen(
                     kneeSide = side,
                     onClose = { flow = ScanFlowState.Intro },
+                    viewModel = viewModel,
                 )
             } else {
                 // Defensive: jangan tampil camera tanpa knee side.
