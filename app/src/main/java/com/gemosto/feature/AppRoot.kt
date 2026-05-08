@@ -12,7 +12,6 @@ import com.gemosto.data.auth.AuthRepository
 import com.gemosto.data.prefs.UserPrefs
 import com.gemosto.domain.model.AuthState
 import com.gemosto.domain.model.ProfileState
-import com.gemosto.feature.home.HomeScreen
 import com.gemosto.feature.onboarding.ProfileSetupScreen
 import com.gemosto.feature.onboarding.SplashScreen
 import com.gemosto.feature.onboarding.WelcomeScreen
@@ -78,7 +77,7 @@ fun AppRoot() {
             // ProfileState pasti Loaded di sini berdasarkan routing,
             // tapi kita guard untuk safety race condition.
             val loaded = profileState as? ProfileState.Loaded ?: return@composable
-            HomeScreen(profile = loaded.profile, onSignOut = onSignOut)
+            MainScaffold(profile = loaded.profile, onSignOut = onSignOut)
         }
     }
 }
