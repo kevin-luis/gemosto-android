@@ -6,10 +6,15 @@ import com.gemosto.core.common.DispatcherProvider
 import com.gemosto.data.auth.AuthRepository
 import com.gemosto.data.auth.FirebaseAuthRepository
 import com.gemosto.data.auth.GoogleSignInClient
+import com.gemosto.data.firestore.ExerciseRepository
+import com.gemosto.data.firestore.FirestoreExerciseRepository
 import com.gemosto.data.firestore.FirestoreProfileRepository
+import com.gemosto.data.firestore.FirestoreRomRepository
 import com.gemosto.data.firestore.ProfileRepository
+import com.gemosto.data.firestore.RomRepository
 import com.gemosto.data.prefs.UserPrefs
 import com.gemosto.feature.AppViewModel
+import com.gemosto.feature.home.HomeViewModel
 import com.gemosto.feature.onboarding.ProfileSetupViewModel
 import com.gemosto.feature.onboarding.WelcomeViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -41,6 +46,8 @@ val appModule = module {
     // ─── Data layer ──────────────────────────────────────────
     single<AuthRepository> { FirebaseAuthRepository(get()) }
     single<ProfileRepository> { FirestoreProfileRepository(get()) }
+    single<RomRepository> { FirestoreRomRepository(get()) }
+    single<ExerciseRepository> { FirestoreExerciseRepository(get()) }
     single { UserPrefs(androidContext()) }
 
     // GoogleSignInClient — webClientId di-resolve dari resource
@@ -59,6 +66,7 @@ val appModule = module {
     viewModel { AppViewModel(get(), get()) }
     viewModel { WelcomeViewModel(get(), get()) }
     viewModel { ProfileSetupViewModel(get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get()) }
 
     // viewModel { HomeViewModel(get(), get(), get(), get()) }  // Hari 4
     // viewModel { RomCameraViewModel(get(), get(), get()) }    // Hari 5-7
