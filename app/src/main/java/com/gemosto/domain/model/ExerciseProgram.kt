@@ -1,5 +1,7 @@
 package com.gemosto.domain.model
 
+import com.gemosto.domain.exercise.Exercise
+
 /**
  * Level latihan yang dihasilkan ExerciseRuleEngine.
  *
@@ -27,10 +29,41 @@ enum class ProgramStatus {
 }
 
 /**
- * Placeholder model — full schema akan diisi di Hari 9-11 (spec 003).
+ * Sumber narasi program — apakah dari Gemini atau fallback statis.
+ */
+enum class NarrativeSource {
+    GEMINI,
+    FALLBACK_STATIC,
+}
+
+/**
+ * Narasi exercise program — output dari Gemini AI.
  *
- * Untuk Hari 4 (Home Dashboard), HomeViewModel hanya butuh field minimum
- * untuk render Card "Program Saya".
+ * **Kontrak penting:** Gemini hanya isi 3 field text ini.
+ * Parameter klinis (gerakan, sets, reps) di-drive sepenuhnya oleh
+ * [com.gemosto.domain.exercise.ExerciseRuleEngine] yang deterministik.
+ *
+ * Spec: 003-exercise-recommendation.md section 7.1.
+ */
+data class ExerciseNarrative(
+    val intro: String,             // max 2 kalimat sapaan personal
+    val rationale: String,         // max 3 kalimat alasan medis sederhana
+    val weeklyMotivation: String,  // 1 kalimat motivasi mingguan
+    val source: NarrativeSource,
+)
+
+/**
+ * Program latihan rumahan yang di-generate untuk user.
+ *
+ * Disimpan di Firestore path `users/{uid}/programs/{programId}`.
+ *
+ * Field `exercises` adalah list latihan dengan parameter klinis sudah
+ * disesuaikan oleh [com.gemosto.domain.exercise.ExerciseRuleEngine.adjustDose].
+ *
+ * Field `narrative` null saat awal generate (Gemini call paralel) —
+ * akan di-update setelah Gemini selesai atau fallback statis.
+ *
+ * Spec: 003-exercise-recommendation.md section 5.
  */
 data class ExerciseProgram(
     val id: String,
@@ -41,7 +74,11 @@ data class ExerciseProgram(
     val level: ExerciseLevel,
     val durationWeeks: Int,
     val frequencyPerWeek: String,
-    val exerciseCount: Int,
+    val exercises: List<Exercise>,         // full list dengan dosis adjusted
+    val narrative: ExerciseNarrative?,     // null sampai Gemini call selesai
     val status: ProgramStatus,
     val safetyNote: String? = null,
-)
+) {
+    /** Convenience untuk Card Home (sebelumnya field standalone). */
+    val exerciseCount: Int get() = exercises.size
+}

@@ -12,9 +12,12 @@ import com.gemosto.data.firestore.FirestoreProfileRepository
 import com.gemosto.data.firestore.FirestoreRomRepository
 import com.gemosto.data.firestore.ProfileRepository
 import com.gemosto.data.firestore.RomRepository
+import com.gemosto.data.llm.GeminiNarrativeService
 import com.gemosto.data.pose.PoseDetector
 import com.gemosto.data.prefs.UserPrefs
+import com.gemosto.domain.exercise.ExerciseRuleEngine
 import com.gemosto.feature.AppViewModel
+import com.gemosto.feature.exercise.ProgramViewModel
 import com.gemosto.feature.home.HomeViewModel
 import com.gemosto.feature.onboarding.ProfileSetupViewModel
 import com.gemosto.feature.onboarding.WelcomeViewModel
@@ -52,6 +55,10 @@ val appModule = module {
     single<ExerciseRepository> { FirestoreExerciseRepository(get()) }
     single { UserPrefs(androidContext()) }
     single { PoseDetector() }
+    single { GeminiNarrativeService() }
+
+    // ─── Domain (pure Kotlin) ────────────────────────────────
+    factory { ExerciseRuleEngine() }
 
     // GoogleSignInClient — webClientId di-resolve dari resource
     // yang auto-generated oleh google-services plugin dari google-services.json.
@@ -71,6 +78,7 @@ val appModule = module {
     viewModel { ProfileSetupViewModel(get(), get(), get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
     viewModel { ScanViewModel(get(), get(), get()) }
+    viewModel { ProgramViewModel(get(), get(), get(), get(), get(), get()) }
 
     // viewModel { HomeViewModel(get(), get(), get(), get()) }  // Hari 4
     // viewModel { RomCameraViewModel(get(), get(), get()) }    // Hari 5-7
