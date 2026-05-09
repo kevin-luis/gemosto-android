@@ -88,24 +88,35 @@ class PoseDetector {
         }
 
         try {
-            // Convert ImageProxy → rotated Bitmap → MPImage
+            // Convert ImageProxy → Bitmap
             val bitmap = imageProxy.toBitmap()
+            
+            // Ensure the bitmap is ARGB_8888. MediaPipe's nativeCreateRgbaImage 
+            // will crash (segfault) if it receives a HARDWARE or incompatible config bitmap.
+            val argbBitmap = if (bitmap.config == Bitmap.Config.ARGB_8888) {
+                bitmap
+            } else {
+                bitmap.copy(Bitmap.Config.ARGB_8888, false)
+            }
+
             val rotation = imageProxy.imageInfo.rotationDegrees
             val rotated = if (rotation != 0) {
                 val matrix = Matrix().apply { postRotate(rotation.toFloat()) }
-                Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                Bitmap.createBitmap(argbBitmap, 0, 0, argbBitmap.width, argbBitmap.height, matrix, true)
             } else {
-                bitmap
+                argbBitmap
             }
-            // Simpan dimensi rotated frame — dipakai overlay drawing untuk
-            // koordinat transform (normalized [0,1] → screen pixel).
+            
+            // Simpan dimensi rotated frame
             lastImageWidth = rotated.width
             lastImageHeight = rotated.height
 
             val mpImage = BitmapImageBuilder(rotated).build()
 
-            // Timestamp wajib monoton increasing untuk LIVE_STREAM mode.
+            // Timestamp wajib monoton increasing
+            // CameraX timestamp is in nanoseconds, MediaPipe expects milliseconds
             val timestamp = imageProxy.imageInfo.timestamp / 1_000_000L
+            
             active.detectAsync(mpImage, timestamp)
         } catch (e: Exception) {
             Log.e(TAG, "detectAsync failed", e)

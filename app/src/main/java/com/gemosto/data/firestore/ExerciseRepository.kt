@@ -67,11 +67,16 @@ class FirestoreExerciseRepository(
     override fun observeActive(uid: String): Flow<ExerciseProgram?> = callbackFlow {
         val sub = collection(uid)
             .whereIn("status", listOf(ProgramStatus.ACTIVE.name, ProgramStatus.BLOCKED_PAIN.name))
-            .orderBy("generatedAt", Query.Direction.DESCENDING)
-            .limit(1)
             .addSnapshotListener { snap, err ->
                 if (err != null) { close(err); return@addSnapshotListener }
-                trySend(snap?.documents?.firstOrNull()?.toExerciseProgram())
+                
+                // Firestore composite index workaround: fetch all active, then sort & limit locally.
+                // Since a user typically has only 1 active program, this is safe & cheap.
+                val latestActive = snap?.documents
+                    ?.mapNotNull { it.toExerciseProgram() }
+                    ?.maxByOrNull { it.generatedAt }
+                    
+                trySend(latestActive)
             }
         awaitClose { sub.remove() }
     }.catch { it.printStackTrace(); emit(null) }

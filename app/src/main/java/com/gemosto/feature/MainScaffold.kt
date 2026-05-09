@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -73,10 +74,14 @@ fun MainScaffold(
                 onOpenProgram = { currentTab = MainTab.EXERCISE },
                 onOpenHistory = { currentTab = MainTab.HISTORY },
             )
-            MainTab.EXERCISE -> ExerciseTabScreen(paddingValues = padding)
+            MainTab.EXERCISE -> ExerciseTabScreen(
+                paddingValues = padding,
+                onGoToScan = { currentTab = MainTab.SCAN },
+            )
             MainTab.SCAN -> ScanTabScreen(
                 paddingValues = padding,
                 profile = profile,
+                onGoToExerciseTab = { currentTab = MainTab.EXERCISE },
             )
             MainTab.HISTORY -> HistoryTabScreen(paddingValues = padding)
             MainTab.ACCOUNT -> AccountTabScreen(
@@ -96,6 +101,7 @@ private fun GemBottomBar(
     Surface(
         color = MaterialTheme.colorScheme.background,
         shadowElevation = 8.dp,
+        modifier = Modifier.navigationBarsPadding(),
     ) {
         Row(
             modifier = Modifier
