@@ -70,7 +70,7 @@ val appModule = module {
     viewModel { WelcomeViewModel(get(), get()) }
     viewModel { ProfileSetupViewModel(get(), get(), get()) }
     viewModel { HomeViewModel(get(), get(), get()) }
-    viewModel { ScanViewModel(get()) }
+    viewModel { ScanViewModel(get(), get(), get()) }
 
     // viewModel { HomeViewModel(get(), get(), get(), get()) }  // Hari 4
     // viewModel { RomCameraViewModel(get(), get(), get()) }    // Hari 5-7

@@ -75,13 +75,25 @@ import java.util.concurrent.Executors
  *
  * Spec: 002-rom-scan.md.
  */
+import androidx.compose.foundation.layout.PaddingValues
+
 @Composable
 fun RomCameraScreen(
+    paddingValues: PaddingValues,
     kneeSide: KneeSide,
     onClose: () -> Unit,
+    onSessionDone: (romId: String) -> Unit,
     viewModel: ScanViewModel,
 ) {
     LockOrientationToPortrait()
+
+    // Watch for session DONE → navigate to Result
+    val sessionState by viewModel.state.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(sessionState.phase, sessionState.completedRomId) {
+        if (sessionState.phase == SessionPhase.DONE && sessionState.completedRomId != null) {
+            onSessionDone(sessionState.completedRomId!!)
+        }
+    }
 
     val context = LocalContext.current
     val poseDetector: PoseDetector = koinInject()
@@ -151,6 +163,7 @@ fun RomCameraScreen(
             }
             else -> {
                 CameraPreviewBox(
+                    paddingValues = paddingValues,
                     kneeSide = kneeSide,
                     poseDetector = poseDetector,
                     viewModel = viewModel,
@@ -186,6 +199,7 @@ private fun checkInitialPermission(context: android.content.Context): CameraPerm
 
 @Composable
 private fun CameraPreviewBox(
+    paddingValues: PaddingValues,
     kneeSide: KneeSide,
     poseDetector: PoseDetector,
     viewModel: ScanViewModel,
@@ -246,8 +260,15 @@ private fun CameraPreviewBox(
             poseQuality = state.poseQuality,
         )
 
-        // Bottom overlay: instruksi placeholder Hari 7-8
-        BottomInstruction()
+        // Bottom overlay: session control + phase indicator
+        SessionBottomPanel(
+            state = state,
+            paddingValues = paddingValues,
+            onStartSession = viewModel::startSession,
+            onCancelSession = {
+                viewModel.resetSession()
+            },
+        )
     }
 }
 
@@ -405,13 +426,20 @@ private fun AngleIndicator(
 }
 
 @Composable
-private fun BottomInstruction() {
+private fun SessionBottomPanel(
+    state: ScanUiState,
+    paddingValues: PaddingValues,
+    onStartSession: () -> Unit,
+    onCancelSession: () -> Unit,
+) {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = paddingValues.calculateBottomPadding()),
         contentAlignment = Alignment.BottomCenter,
     ) {
         Surface(
-            color = Color.Black.copy(alpha = 0.55f),
+            color = Color.Black.copy(alpha = 0.6f),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .padding(16.dp)
@@ -421,21 +449,161 @@ private fun BottomInstruction() {
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = "Posisikan lutut Anda dari samping",
-                    style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "Titik hijau menandakan landmark terdeteksi jelas. Sesi 2-fase " +
-                        "(extension + flexion) akan diaktifkan Hari 8.",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color.White.copy(alpha = 0.85f),
-                    ),
-                    textAlign = TextAlign.Center,
-                )
+                when (state.phase) {
+                    SessionPhase.IDLE -> IdlePanel(
+                        canStart = state.poseQuality == PoseQuality.Good,
+                        onStart = onStartSession,
+                    )
+                    SessionPhase.COUNTDOWN_EXT -> CountdownPanel(
+                        title = "Bersiap untuk meluruskan kaki",
+                        seconds = state.phaseRemainingSeconds,
+                    )
+                    SessionPhase.EXTENSION -> ActivePhasePanel(
+                        title = "Luruskan kaki Anda ke arah lantai",
+                        // Progress: max duration 10s. Bar penuh saat 10s elapsed.
+                        progress = (10 - state.phaseRemainingSeconds).coerceAtLeast(0) / 10f,
+                        currentLabel = "Fase 1 dari 2",
+                        onCancel = onCancelSession,
+                    )
+                    SessionPhase.COUNTDOWN_FLEX -> CountdownPanel(
+                        title = "Bersiap untuk menekuk lutut",
+                        seconds = state.phaseRemainingSeconds,
+                    )
+                    SessionPhase.FLEXION -> ActivePhasePanel(
+                        title = "Tekuk lutut, tarik tumit ke arah kursi",
+                        progress = (10 - state.phaseRemainingSeconds).coerceAtLeast(0) / 10f,
+                        currentLabel = "Fase 2 dari 2",
+                        onCancel = onCancelSession,
+                    )
+                    SessionPhase.SAVING -> SavingPanel()
+                    SessionPhase.DONE -> {
+                        Text(
+                            "Selesai — memuat hasil...",
+                            style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
+                        )
+                    }
+                    SessionPhase.FAILED -> FailedPanel(
+                        message = state.sessionErrorMessage ?: "Pengukuran gagal.",
+                        onRetry = onCancelSession,    // reset → IDLE
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun IdlePanel(canStart: Boolean, onStart: () -> Unit) {
+    Text(
+        text = "Posisikan lutut Anda dari samping",
+        style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        text = if (canStart) "Pose terdeteksi jelas — Anda siap mulai." else "Pastikan tubuh terlihat penuh dari samping.",
+        style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.85f)),
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(12.dp))
+    Button(
+        onClick = onStart,
+        enabled = canStart,
+        modifier = Modifier.fillMaxWidth().height(48.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+    ) {
+        Text("Mulai Pengukuran", style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Composable
+private fun CountdownPanel(title: String, seconds: Int) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(8.dp))
+    Text(
+        text = "$seconds",
+        style = MaterialTheme.typography.displayLarge.copy(
+            color = Color.White,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.W600,
+        ),
+    )
+}
+
+@Composable
+private fun ActivePhasePanel(
+    title: String,
+    progress: Float,
+    currentLabel: String,
+    onCancel: () -> Unit,
+) {
+    Text(
+        text = currentLabel,
+        style = MaterialTheme.typography.labelMedium.copy(color = Color.White.copy(alpha = 0.7f)),
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(12.dp))
+    androidx.compose.material3.LinearProgressIndicator(
+        progress = { progress.coerceIn(0f, 1f) },
+        modifier = Modifier.fillMaxWidth(),
+        color = GemColors.EmeraldPrimary,
+        trackColor = Color.White.copy(alpha = 0.2f),
+    )
+    Spacer(Modifier.height(8.dp))
+    Text(
+        text = "Hentikan",
+        style = MaterialTheme.typography.labelMedium.copy(color = Color.White.copy(alpha = 0.7f)),
+        modifier = Modifier
+            .clickable(onClick = onCancel)
+            .padding(8.dp),
+    )
+}
+
+@Composable
+private fun SavingPanel() {
+    androidx.compose.material3.CircularProgressIndicator(
+        color = GemColors.EmeraldPrimary,
+        modifier = Modifier.size(32.dp),
+    )
+    Spacer(Modifier.height(8.dp))
+    Text(
+        text = "Menyimpan hasil...",
+        style = MaterialTheme.typography.bodyMedium.copy(color = Color.White),
+    )
+}
+
+@Composable
+private fun FailedPanel(message: String, onRetry: () -> Unit) {
+    Text(
+        text = "Pengukuran Gagal",
+        style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
+    )
+    Spacer(Modifier.height(4.dp))
+    Text(
+        text = message,
+        style = MaterialTheme.typography.bodyMedium.copy(color = Color.White.copy(alpha = 0.85f)),
+        textAlign = TextAlign.Center,
+    )
+    Spacer(Modifier.height(12.dp))
+    Button(
+        onClick = onRetry,
+        modifier = Modifier.fillMaxWidth().height(48.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+        ),
+    ) {
+        Text("Coba Lagi", style = MaterialTheme.typography.labelLarge)
     }
 }
 

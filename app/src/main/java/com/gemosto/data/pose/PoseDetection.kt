@@ -32,6 +32,7 @@ data class PoseDetection(
         const val LEFT_KNEE = 25
         const val RIGHT_KNEE = 26
         const val LEFT_ANKLE = 27
+
         const val RIGHT_ANKLE = 28
 
         val EMPTY = PoseDetection(emptyList(), emptyList(), 0L, 0, 0)
