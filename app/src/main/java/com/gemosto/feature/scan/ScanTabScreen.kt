@@ -11,6 +11,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gemosto.domain.model.UserProfile
+import com.gemosto.feature.exercise.ProgramViewModel
 import com.gemosto.feature.result.RomResultScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -19,12 +20,17 @@ import org.koin.androidx.compose.koinViewModel
  *
  * State `flow` disimpan via rememberSaveable, survive config change,
  * reset saat user pindah tab atau setelah Result.
+ *
+ * @param onGoToExerciseTab dipanggil saat user tap "Lihat Rekomendasi Latihan"
+ *        di RomResultScreen — switch tab ke Exercise + program di-generate.
  */
 @Composable
 fun ScanTabScreen(
     paddingValues: PaddingValues,
     profile: UserProfile,
+    onGoToExerciseTab: () -> Unit = {},
     viewModel: ScanViewModel = koinViewModel(),
+    programViewModel: ProgramViewModel = koinViewModel(),
 ) {
     LaunchedEffect(profile.affectedKnee) {
         viewModel.initFromProfile(profile.affectedKnee)
@@ -47,7 +53,7 @@ fun ScanTabScreen(
             selectedKneeSide = state.selectedKneeSide,
             onKneeSelected = viewModel::onKneeSelected,
             onReadyClick = {
-                viewModel.resetSession()    // pastikan IDLE saat enter Camera
+                viewModel.resetSession()
                 flow = ScanFlowState.Camera
             },
         )
@@ -71,9 +77,6 @@ fun ScanTabScreen(
             }
         }
         is ScanFlowState.Result -> {
-            // Ambil hasil dari ViewModel — sudah loaded saat finalize().
-            // Kalau ViewModel state hilang (mis. process death), bisa fetch
-            // by id dari Firestore (V2 enhancement).
             val rom = state.completedRom
             if (rom != null && rom.id == current.romId) {
                 RomResultScreen(
@@ -84,14 +87,16 @@ fun ScanTabScreen(
                         flow = ScanFlowState.Intro
                     },
                     onSeeRecommendation = {
-                        // Hari 9-11 — Exercise tab akan handle generate program.
-                        // Untuk Hari 8: balik ke Intro.
+                        // 1. Trigger generate program berdasar ROM ini
+                        programViewModel.generateProgram(romId = current.romId)
+                        // 2. Reset scan flow supaya tab Scan kembali bersih
                         viewModel.resetSession()
                         flow = ScanFlowState.Intro
+                        // 3. Switch ke tab Exercise — user lihat program loading → loaded
+                        onGoToExerciseTab()
                     },
                 )
             } else {
-                // Race / data hilang → balik Intro
                 LaunchedEffect(Unit) {
                     viewModel.resetSession()
                     flow = ScanFlowState.Intro
