@@ -83,7 +83,10 @@ fun MainScaffold(
                 profile = profile,
                 onGoToExerciseTab = { currentTab = MainTab.EXERCISE },
             )
-            MainTab.HISTORY -> HistoryTabScreen(paddingValues = padding)
+            MainTab.HISTORY -> HistoryTabScreen(
+                paddingValues = padding,
+                onGoToScan = { currentTab = MainTab.SCAN }
+            )
             MainTab.ACCOUNT -> AccountTabScreen(
                 paddingValues = padding,
                 profile = profile,

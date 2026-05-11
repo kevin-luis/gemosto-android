@@ -18,8 +18,11 @@ import com.gemosto.data.llm.GeminiNarrativeService
 import com.gemosto.data.pose.PoseDetector
 import com.gemosto.data.prefs.UserPrefs
 import com.gemosto.domain.exercise.ExerciseRuleEngine
+import com.gemosto.feature.account.AccountViewModel
+import com.gemosto.feature.account.ProfileEditViewModel
 import com.gemosto.feature.AppViewModel
 import com.gemosto.feature.exercise.ProgramViewModel
+import com.gemosto.feature.history.HistoryViewModel
 import com.gemosto.feature.home.HomeViewModel
 import com.gemosto.feature.onboarding.ProfileSetupViewModel
 import com.gemosto.feature.onboarding.WelcomeViewModel
@@ -96,6 +99,7 @@ val appModule = module {
     // viewModel { HomeViewModel(get(), get(), get(), get()) }  // Hari 4
     // viewModel { RomCameraViewModel(get(), get(), get()) }    // Hari 5-7
     // viewModel { ProgramViewModel(get(), get(), get(), get()) } // Hari 9-11
-    // viewModel { HistoryViewModel(get()) }                    // Hari 13
-    // viewModel { AccountViewModel(get(), get(), get()) }      // Hari 13
+    viewModel { HistoryViewModel(get(), get()) }
+    viewModel { AccountViewModel(get(), get(), get(), get()) }
+    viewModel { ProfileEditViewModel(get()) }
 }

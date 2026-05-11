@@ -67,6 +67,14 @@ class UserPrefs(private val context: Context) {
         context.dataStore.edit { it.clear() }
     }
 
+    suspend fun clearOnboardingAndWarnings() {
+        context.dataStore.edit { prefs ->
+            prefs.remove(KEY_ONBOARDING_COMPLETED)
+            prefs.remove(KEY_PAIN_WARNING_DISMISSED_AT)
+            // language tidak di-clear (UX preference) jika ada di masa depan
+        }
+    }
+
     companion object {
         private val KEY_ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
         private val KEY_PAIN_WARNING_DISMISSED_AT = longPreferencesKey("pain_warning_dismissed_at")
