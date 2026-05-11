@@ -58,8 +58,10 @@ import com.gemosto.domain.model.RomResult
 fun RomResultScreen(
     paddingValues: PaddingValues,
     rom: RomResult,
-    onScanAgain: () -> Unit,
-    onSeeRecommendation: () -> Unit,
+    readOnly: Boolean = false,
+    onClose: () -> Unit = {},
+    onScanAgain: () -> Unit = {},
+    onSeeRecommendation: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -86,24 +88,43 @@ fun RomResultScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        Button(
-            onClick = onSeeRecommendation,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ),
-        ) {
-            Text("Lihat Rekomendasi Latihan", style = MaterialTheme.typography.labelLarge)
-        }
+        if (readOnly) {
+            Button(
+                onClick = onClose,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            ) {
+                Text("Tutup", style = MaterialTheme.typography.labelLarge)
+            }
+        } else {
+            Button(
+                onClick = onSeeRecommendation,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+            ) {
+                Text("Lihat Rekomendasi Latihan", style = MaterialTheme.typography.labelLarge)
+            }
 
-        Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-        OutlinedButton(
-            onClick = onScanAgain,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-        ) {
-            Text("Scan Ulang", style = MaterialTheme.typography.labelLarge)
+            OutlinedButton(
+                onClick = onScanAgain,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+            ) {
+                Text("Scan Ulang", style = MaterialTheme.typography.labelLarge)
+            }
         }
 
         Spacer(Modifier.height(24.dp))
