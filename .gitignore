@@ -86,6 +86,9 @@ Thumbs.db
 !README.md
 *.pdf
 
+# Rules
+*.rules
+
 # Exclude AI agent files
 CLAUDE.md
 GEMINI.md

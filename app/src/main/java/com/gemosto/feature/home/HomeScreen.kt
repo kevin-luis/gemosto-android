@@ -90,6 +90,15 @@ fun HomeScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        if (state.isLoading) {
+            SkeletonCard()
+            Spacer(Modifier.height(12.dp))
+            SkeletonCard()
+            Spacer(Modifier.height(12.dp))
+            SkeletonCard()
+            return@Column
+        }
+
         if (state.showPainWarning) {
             PainWarningBanner(
                 onDismiss = { viewModel.dismissPainWarning() }
@@ -131,6 +140,21 @@ fun HomeScreen(
 
         Spacer(Modifier.height(24.dp))
     }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Skeleton Loading
+// ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun SkeletonCard() {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = GemColors.Border.copy(alpha = 0.5f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+    ) {}
 }
 
 // ─────────────────────────────────────────────────────────────────
