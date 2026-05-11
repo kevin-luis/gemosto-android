@@ -82,8 +82,17 @@ fun ExerciseTabScreen(
         }
 
         is ExerciseTabState.PostSession -> {
-            // Placeholder Hari 12. Untuk Hari 11, langsung balik ke Program.
-            LaunchedEffect(Unit) { tabState = ExerciseTabState.Program }
+            PostExercisePainDialog(
+                onSave = { score ->
+                    viewModel.savePainLog(
+                        score = score,
+                        stoppedDueToPain = state.stoppedDueToPain,
+                        onComplete = {
+                            tabState = ExerciseTabState.Program
+                        }
+                    )
+                }
+            )
         }
     }
 

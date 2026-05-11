@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -89,6 +90,13 @@ fun HomeScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        if (state.showPainWarning) {
+            PainWarningBanner(
+                onDismiss = { viewModel.dismissPainWarning() }
+            )
+            Spacer(Modifier.height(16.dp))
+        }
+
         // ─── Card 1: Scan ROM ──────────────────────────────────────
         ScanRomCard(
             scanCount = if (state.latestRom != null) 1 else 0,    // simplified MVP
@@ -122,6 +130,44 @@ fun HomeScreen(
         )
 
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Pain Warning Banner
+// ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun PainWarningBanner(onDismiss: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = GemColors.DangerBg,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.WarningAmber,
+                contentDescription = null,
+                tint = GemColors.Danger,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Nyeri Anda cukup tinggi. Pertimbangkan konsultasi dokter sebelum sesi berikutnya.",
+                    style = MaterialTheme.typography.bodyMedium.copy(color = GemColors.Danger)
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Tutup",
+                    style = MaterialTheme.typography.labelMedium.copy(color = GemColors.Danger),
+                    modifier = Modifier.clickable { onDismiss() }
+                )
+            }
+        }
     }
 }
 

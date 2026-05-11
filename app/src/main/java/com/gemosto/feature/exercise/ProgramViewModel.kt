@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.gemosto.data.auth.AuthRepository
 import com.gemosto.data.firestore.ExerciseRepository
+import com.gemosto.data.firestore.PainLogRepository
 import com.gemosto.data.firestore.ProfileRepository
 import com.gemosto.data.firestore.RomRepository
 import com.gemosto.data.llm.GeminiNarrativeService
@@ -15,8 +16,11 @@ import com.gemosto.domain.model.ExerciseLevel
 import com.gemosto.domain.model.ExerciseProgram
 import com.gemosto.domain.model.KneeSide
 import com.gemosto.domain.model.ProgramStatus
+import com.gemosto.domain.exercise.PainLogLogic
+import com.gemosto.domain.model.PainEntry
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,6 +52,7 @@ class ProgramViewModel(
     private val profileRepo: ProfileRepository,
     private val romRepo: RomRepository,
     private val exerciseRepo: ExerciseRepository,
+    private val painLogRepo: PainLogRepository,
     private val ruleEngine: ExerciseRuleEngine,
     private val narrativeService: GeminiNarrativeService,
 ) : ViewModel() {
@@ -112,14 +117,19 @@ class ProgramViewModel(
                     Log.d(TAG, "Archiving old program ${old.id}")
                     exerciseRepo.archive(uid, old.id)
                 }
+                
+                // Fetch recent pain logs (limit 10 for safety check)
+                val recentPainLogs = painLogRepo.recentEntries(10).firstOrNull() ?: emptyList()
+                val recentPainScore = recentPainLogs.firstOrNull()?.score
+                val consecutiveHighPain = PainLogLogic.computeConsecutiveHighPainCount(recentPainLogs)
 
                 // STEP 1 — Rule engine compute (instant)
                 val ruleInput = ExerciseRuleEngine.Input(
                     romCategory = rom.category,
                     age = profile.age,
                     activityLevel = profile.activityLevel,
-                    recentPainScore = null,           // Hari 12 wire pain log
-                    consecutiveHighPainCount = 0,
+                    recentPainScore = recentPainScore,
+                    consecutiveHighPainCount = consecutiveHighPain,
                 )
                 val ruleOutput = ruleEngine.compute(ruleInput)
                 Log.d(TAG, "RuleEngine output: level=${ruleOutput.level}, ${ruleOutput.exercises.size} exercises")
@@ -218,6 +228,33 @@ class ProgramViewModel(
     private fun failGenerate(message: String) {
         Log.w(TAG, "Generate failed: $message")
         _genState.value = GenerateState.Failed(message)
+    }
+
+    fun savePainLog(score: Int, stoppedDueToPain: Boolean, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val uid = authRepo.currentUid()
+            if (uid == null) {
+                onComplete()
+                return@launch
+            }
+            
+            val entry = PainEntry(
+                id = "pain_${System.currentTimeMillis()}_${UUID.randomUUID().toString().take(8)}",
+                userId = uid,
+                timestampMs = System.currentTimeMillis(),
+                score = score,
+                stoppedDueToPain = stoppedDueToPain,
+                programId = activeProgram.value?.id,
+                sessionStartedAtMs = null, // Can add tracking later if needed
+                sessionDurationMs = null
+            )
+            
+            val result = painLogRepo.save(entry)
+            if (result.isFailure) {
+                Log.e(TAG, "Failed to save pain log", result.exceptionOrNull())
+            }
+            onComplete()
+        }
     }
 
     companion object {
