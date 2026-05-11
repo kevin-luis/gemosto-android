@@ -21,6 +21,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.FitnessCenter
 import androidx.compose.material.icons.outlined.WarningAmber
+import androidx.compose.material.icons.outlined.Accessibility
+import androidx.compose.material.icons.outlined.AirlineSeatLegroomNormal
+import androidx.compose.material.icons.outlined.AirlineSeatLegroomExtra
+import androidx.compose.material.icons.outlined.AirlineSeatReclineNormal
+import androidx.compose.material.icons.outlined.AirlineSeatFlat
+import androidx.compose.material.icons.outlined.DirectionsWalk
+import androidx.compose.material.icons.outlined.DirectionsRun
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -85,7 +92,7 @@ fun ExerciseDetailScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            HeroIllustration()
+            HeroIllustration(exercise)
 
             Spacer(Modifier.height(16.dp))
 
@@ -157,7 +164,19 @@ private fun StepIndicator(current: Int, total: Int) {
 // ─────────────────────────────────────────────────────────────────
 
 @Composable
-private fun HeroIllustration() {
+private fun HeroIllustration(exercise: Exercise) {
+    val icon = when {
+        exercise.name.contains("Quad", ignoreCase = true) -> Icons.Outlined.DirectionsWalk
+        exercise.name.contains("Heel", ignoreCase = true) -> Icons.Outlined.AirlineSeatLegroomNormal
+        exercise.name.contains("Ankle", ignoreCase = true) -> Icons.Outlined.DirectionsRun
+        exercise.name.contains("Glute", ignoreCase = true) -> Icons.Outlined.AirlineSeatLegroomExtra
+        exercise.name.contains("Raise", ignoreCase = true) -> Icons.Outlined.Accessibility
+        exercise.name.contains("Squat", ignoreCase = true) -> Icons.Outlined.AirlineSeatReclineNormal
+        exercise.name.contains("Step", ignoreCase = true) -> Icons.Outlined.DirectionsWalk
+        exercise.name.contains("Bridge", ignoreCase = true) -> Icons.Outlined.AirlineSeatFlat
+        else -> Icons.Outlined.FitnessCenter
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -169,7 +188,7 @@ private fun HeroIllustration() {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Outlined.FitnessCenter,
+            imageVector = icon,
             contentDescription = null,
             tint = GemColors.EmeraldPrimary,
             modifier = Modifier.size(80.dp),

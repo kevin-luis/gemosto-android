@@ -21,7 +21,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessibilityNew
+import androidx.compose.material.icons.outlined.AirlineSeatReclineNormal
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -157,8 +159,6 @@ fun ScanIntroScreen(
 
 @Composable
 private fun HeroIllustration() {
-    // Placeholder hero — akan diganti dengan SVG ilustrasi posisi duduk + kamera
-    // saat polish hari 14.
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -167,12 +167,21 @@ private fun HeroIllustration() {
             .background(GemColors.EmeraldLight),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = Icons.Outlined.AccessibilityNew,
-            contentDescription = null,
-            tint = GemColors.EmeraldPrimary,
-            modifier = Modifier.size(80.dp),
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Outlined.AirlineSeatReclineNormal,
+                contentDescription = null,
+                tint = GemColors.EmeraldPrimary,
+                modifier = Modifier.size(72.dp),
+            )
+            Spacer(Modifier.width(24.dp))
+            Icon(
+                imageVector = Icons.Outlined.PhotoCamera,
+                contentDescription = null,
+                tint = GemColors.EmeraldPrimary,
+                modifier = Modifier.size(48.dp),
+            )
+        }
     }
 }
 
