@@ -10,6 +10,8 @@ import com.gemosto.data.firestore.ExerciseRepository
 import com.gemosto.data.firestore.FirestoreExerciseRepository
 import com.gemosto.data.firestore.FirestoreProfileRepository
 import com.gemosto.data.firestore.FirestoreRomRepository
+import com.gemosto.data.firestore.PainLogRepository
+import com.gemosto.data.firestore.FirestorePainLogRepository
 import com.gemosto.data.firestore.ProfileRepository
 import com.gemosto.data.firestore.RomRepository
 import com.gemosto.data.llm.GeminiNarrativeService
@@ -53,6 +55,7 @@ val appModule = module {
     single<ProfileRepository> { FirestoreProfileRepository(get()) }
     single<RomRepository> { FirestoreRomRepository(get()) }
     single<ExerciseRepository> { FirestoreExerciseRepository(get()) }
+    single<PainLogRepository> { FirestorePainLogRepository(get(), get()) }
     single { UserPrefs(androidContext()) }
     single { PoseDetector() }
     single { GeminiNarrativeService() }
@@ -76,9 +79,19 @@ val appModule = module {
     viewModel { AppViewModel(get(), get()) }
     viewModel { WelcomeViewModel(get(), get()) }
     viewModel { ProfileSetupViewModel(get(), get(), get()) }
-    viewModel { HomeViewModel(get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get()) }
     viewModel { ScanViewModel(get(), get(), get()) }
-    viewModel { ProgramViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { 
+        ProgramViewModel(
+            authRepo = get(),
+            profileRepo = get(),
+            romRepo = get(),
+            exerciseRepo = get(),
+            painLogRepo = get(),
+            ruleEngine = get(),
+            narrativeService = get()
+        ) 
+    }
 
     // viewModel { HomeViewModel(get(), get(), get(), get()) }  // Hari 4
     // viewModel { RomCameraViewModel(get(), get(), get()) }    // Hari 5-7
