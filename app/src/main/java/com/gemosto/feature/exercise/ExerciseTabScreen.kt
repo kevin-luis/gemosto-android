@@ -10,15 +10,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 
 /**
- * Tab Latihan — host untuk flow Program → Session → (PostSession Hari 12).
+ * Tab Latihan — host untuk flow Program → Session → PostSession.
  *
- * State `tabState` disimpan rememberSaveable supaya survive config change.
+ * State `tabState` disimpan lokal selama tab aktif.
  *
  * Spec: 003-exercise-recommendation.md.
  */
@@ -28,8 +27,10 @@ fun ExerciseTabScreen(
     onGoToScan: () -> Unit = {},
     viewModel: ProgramViewModel = koinViewModel(),
 ) {
-    val program by viewModel.activeProgram.collectAsStateWithLifecycle()
+    val programState by viewModel.activeProgramState.collectAsStateWithLifecycle()
     val genState by viewModel.generateState.collectAsStateWithLifecycle()
+    val program = (programState as? ActiveProgramState.Loaded)?.program
+    val isProgramLoading = programState is ActiveProgramState.Loading
 
     var tabState: ExerciseTabState by remember { mutableStateOf(ExerciseTabState.Program) }
     var showStopConfirmDialog by remember { mutableStateOf(false) }
@@ -44,9 +45,10 @@ fun ExerciseTabScreen(
         ExerciseTabState.Program -> ProgramOrEmptyState(
             paddingValues = paddingValues,
             program = program,
+            isProgramLoading = isProgramLoading,
             genState = genState,
             onStartSession = {
-                if (program != null && program!!.exercises.isNotEmpty()) {
+                if (program != null && program.exercises.isNotEmpty()) {
                     tabState = ExerciseTabState.Session(exerciseIndex = 0)
                 }
             },
@@ -68,8 +70,7 @@ fun ExerciseTabScreen(
                     ),
                     onAdvance = {
                         if (safeIndex >= current.exercises.size - 1) {
-                            // Latihan terakhir → Hari 12 akan show pain dialog.
-                            // Hari 11 placeholder: balik ke Program.
+                            // Latihan terakhir -> catat pain log sebelum kembali ke Program.
                             tabState = ExerciseTabState.PostSession(stoppedDueToPain = false)
                         } else {
                             tabState = ExerciseTabState.Session(safeIndex + 1)
@@ -131,6 +132,7 @@ fun ExerciseTabScreen(
 private fun ProgramOrEmptyState(
     paddingValues: PaddingValues,
     program: com.gemosto.domain.model.ExerciseProgram?,
+    isProgramLoading: Boolean,
     genState: GenerateState,
     onStartSession: () -> Unit,
     onGoToScan: () -> Unit,
@@ -139,6 +141,9 @@ private fun ProgramOrEmptyState(
         // Sedang generate → loading state, tapi kalau program lama masih ada
         // tampilkan saja program lama (Firestore listener masih aktif).
         genState is GenerateState.Generating && program == null -> {
+            ProgramLoadingState(paddingValues = paddingValues)
+        }
+        isProgramLoading && program == null -> {
             ProgramLoadingState(paddingValues = paddingValues)
         }
         genState is GenerateState.Failed && program == null -> {
