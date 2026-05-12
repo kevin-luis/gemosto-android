@@ -20,12 +20,15 @@ import com.gemosto.domain.exercise.PainLogLogic
 import com.gemosto.domain.model.PainEntry
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -61,19 +64,39 @@ class ProgramViewModel(
     val generateState: StateFlow<GenerateState> = _genState.asStateFlow()
 
     /**
-     * Active program reactive — null kalau belum ada / di-archive semua.
-     * Observed via Firestore listener — update otomatis saat generate sukses.
+     * Active program reactive dari Firestore.
+     *
+     * Loading dipisah dari Loaded(null) supaya UI tidak menampilkan empty state
+     * sebelum snapshot pertama selesai dibaca.
      */
-    val activeProgram: StateFlow<ExerciseProgram?> = authRepo.authState
+    val activeProgramState: StateFlow<ActiveProgramState> = authRepo.authState
         .flatMapLatest { auth ->
             when (auth) {
                 is AuthState.SignedIn -> exerciseRepo.observeActive(auth.uid)
-                else -> flowOf(null)
+                    .map<ExerciseProgram?, ActiveProgramState> { ActiveProgramState.Loaded(it) }
+                    .onStart { emit(ActiveProgramState.Loading) }
+                    .catch { e ->
+                        Log.w(TAG, "Failed to observe active program", e)
+                        emit(ActiveProgramState.Loaded(null))
+                    }
+                AuthState.Loading -> flowOf(ActiveProgramState.Loading)
+                AuthState.SignedOut -> flowOf(ActiveProgramState.Loaded(null))
             }
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
+            started = SharingStarted.Eagerly,
+            initialValue = ActiveProgramState.Loading,
+        )
+
+    /**
+     * Convenience value untuk logic internal yang hanya butuh programnya.
+     */
+    val activeProgram: StateFlow<ExerciseProgram?> = activeProgramState
+        .map { state -> (state as? ActiveProgramState.Loaded)?.program }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
             initialValue = null,
         )
 
@@ -270,4 +293,12 @@ sealed interface GenerateState {
     data object Generating : GenerateState
     data class Success(val programId: String) : GenerateState
     data class Failed(val message: String) : GenerateState
+}
+
+/**
+ * State load program aktif.
+ */
+sealed interface ActiveProgramState {
+    data object Loading : ActiveProgramState
+    data class Loaded(val program: ExerciseProgram?) : ActiveProgramState
 }

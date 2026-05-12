@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isValidProfile(data) {
+      return data.keys().hasAll(['uid', 'name', 'age', 'affectedKnee', 'activityLevel'])
+          && data.uid is string
+          && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+          && data.age is int && data.age >= 18 && data.age <= 100
+          && data.affectedKnee in ['LEFT', 'RIGHT', 'BOTH']
+          && data.activityLevel in ['LOW', 'MODERATE', 'ACTIVE'];
+    }
+
+    function isValidRomResult(data) {
+      return data.keys().hasAll(['id', 'userId', 'timestampMs', 'kneeSide',
+                                  'maxFlexionDeg', 'maxExtensionLagDeg', 'category'])
+          && data.kneeSide in ['LEFT', 'RIGHT']
+          && data.category in ['NORMAL', 'MILD', 'MODERATE', 'SEVERE']
+          && data.maxFlexionDeg is number
+          && data.maxFlexionDeg >= 0 && data.maxFlexionDeg <= 200
+          && data.maxExtensionLagDeg is number
+          && data.maxExtensionLagDeg >= 0 && data.maxExtensionLagDeg <= 90;
+    }
+
+    function isValidPainEntry(data) {
+      return data.keys().hasAll(['id', 'userId', 'timestampMs', 'score'])
+          && data.score is int
+          && data.score >= 0 && data.score <= 10
+          && data.timestampMs is int;
+    }
+
+    function isValidProgram(data) {
+      return data.keys().hasAll(['id', 'userId', 'romCategory', 'level'])
+          && data.romCategory in ['NORMAL', 'MILD', 'MODERATE', 'SEVERE']
+          && data.level in ['BLOCK', 'GENTLE', 'STRENGTHENING', 'FUNCTIONAL'];
+    }
+
+    // ─────────────────────────────────────────────
+    // User document (root)
+    match /users/{uid} {
+      // User boleh baca/tulis document root miliknya
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid);
+      allow delete: if isOwner(uid);
+
+      // Profile subcollection
+      match /profile/{docId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && isValidProfile(request.resource.data);
+        allow delete: if isOwner(uid);
+      }
+
+      // ROM Results subcollection
+      match /romResults/{romId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+                      && isValidRomResult(request.resource.data)
+                      && request.resource.data.userId == uid;
+        allow update: if isOwner(uid)
+                      && request.resource.data.userId == uid;
+        allow delete: if isOwner(uid);
+      }
+
+      // Programs subcollection
+      match /programs/{programId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+                      && isValidProgram(request.resource.data)
+                      && request.resource.data.userId == uid;
+        allow update: if isOwner(uid)
+                      && request.resource.data.userId == uid;
+        allow delete: if isOwner(uid);
+      }
+
+      // Pain Log subcollection
+      match /painLogs/{painId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid)
+                      && isValidPainEntry(request.resource.data)
+                      && request.resource.data.userId == uid;
+        allow update: if isOwner(uid)
+                      && request.resource.data.userId == uid;
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    // Default deny untuk path lain
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
