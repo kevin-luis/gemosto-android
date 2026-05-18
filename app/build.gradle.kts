@@ -16,6 +16,7 @@ android {
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = "0.1.0-mvp"
+        buildConfigField("String", "GEMINI_MODEL", "\"gemini-2.5-flash\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }

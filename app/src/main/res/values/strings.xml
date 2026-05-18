@@ -29,6 +29,25 @@
     <string name="error_login_canceled">Login dibatalkan.</string>
     <string name="error_login_failed">Login gagal. Silakan coba lagi.</string>
 
+    <!-- Gemo AI -->
+    <string name="gemo_suggested_question_oa_basics">Apa itu osteoartritis lutut?</string>
+    <string name="gemo_suggested_question_exercise">Latihan ringan apa yang umumnya baik untuk OA lutut?</string>
+    <string name="gemo_suggested_question_stiffness">Bagaimana cara membantu mengurangi kaku pada lutut?</string>
+    <string name="gemo_suggested_question_doctor">Kapan nyeri lutut sebaiknya diperiksa ke dokter?</string>
+    <string name="gemo_home_card_title">Tanya Gemo AI</string>
+    <string name="gemo_home_card_body">Asisten edukasi untuk OA lutut dan kesehatan yang berkaitan langsung dengannya.</string>
+    <string name="gemo_title">Gemo AI</string>
+    <string name="gemo_motto">Asisten Kesehatan Lutut Anda</string>
+    <string name="gemo_new_session">Sesi Baru</string>
+    <string name="gemo_disclaimer_banner">Informasi edukasi, bukan pengganti pemeriksaan dokter.</string>
+    <string name="gemo_suggested_title">Mulai dengan pertanyaan berikut</string>
+    <string name="gemo_input_placeholder">Tanya tentang OA lutut, latihan, atau cara mengelola nyeri...</string>
+    <string name="gemo_send">Kirim</string>
+    <string name="gemo_loading">Gemo sedang menyiapkan jawaban...</string>
+    <string name="gemo_send_failed">Jawaban belum berhasil dimuat.</string>
+    <string name="gemo_response_refusal_label">Di luar cakupan Gemo</string>
+    <string name="gemo_response_escalation_label">Perlu evaluasi medis segera</string>
+
     <!-- Bottom Navigation -->
     <string name="nav_home">Beranda</string>
     <string name="nav_exercise">Latihan</string>

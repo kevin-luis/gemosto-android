@@ -14,14 +14,19 @@ import com.gemosto.data.firestore.PainLogRepository
 import com.gemosto.data.firestore.FirestorePainLogRepository
 import com.gemosto.data.firestore.ProfileRepository
 import com.gemosto.data.firestore.RomRepository
+import com.gemosto.data.llm.GeminiGemoService
 import com.gemosto.data.llm.GeminiNarrativeService
+import com.gemosto.data.llm.GemoAiRepository
+import com.gemosto.data.llm.GemoAiRepositoryImpl
 import com.gemosto.data.pose.PoseDetector
 import com.gemosto.data.prefs.UserPrefs
 import com.gemosto.domain.exercise.ExerciseRuleEngine
+import com.gemosto.domain.gemo.SuggestedQuestion
 import com.gemosto.feature.account.AccountViewModel
 import com.gemosto.feature.account.ProfileEditViewModel
 import com.gemosto.feature.AppViewModel
 import com.gemosto.feature.exercise.ProgramViewModel
+import com.gemosto.feature.gemo.GemoChatViewModel
 import com.gemosto.feature.history.HistoryViewModel
 import com.gemosto.feature.home.HomeViewModel
 import com.gemosto.feature.onboarding.ProfileSetupViewModel
@@ -62,6 +67,8 @@ val appModule = module {
     single { UserPrefs(androidContext()) }
     single { PoseDetector() }
     single { GeminiNarrativeService() }
+    single { GeminiGemoService() }
+    single<GemoAiRepository> { GemoAiRepositoryImpl(get()) }
 
     // ─── Domain (pure Kotlin) ────────────────────────────────
     factory { ExerciseRuleEngine() }
@@ -102,4 +109,23 @@ val appModule = module {
     viewModel { HistoryViewModel(get(), get()) }
     viewModel { AccountViewModel(get(), get(), get(), get()) }
     viewModel { ProfileEditViewModel(get()) }
+    viewModel {
+        GemoChatViewModel(
+            gemoAiRepository = get(),
+            initialSuggestedQuestions = listOf(
+                SuggestedQuestion(
+                    text = androidContext().getString(R.string.gemo_suggested_question_oa_basics),
+                ),
+                SuggestedQuestion(
+                    text = androidContext().getString(R.string.gemo_suggested_question_exercise),
+                ),
+                SuggestedQuestion(
+                    text = androidContext().getString(R.string.gemo_suggested_question_stiffness),
+                ),
+                SuggestedQuestion(
+                    text = androidContext().getString(R.string.gemo_suggested_question_doctor),
+                ),
+            ),
+        )
+    }
 }

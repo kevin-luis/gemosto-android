@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.PhotoCamera
@@ -35,10 +36,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gemosto.R
 import com.gemosto.core.designsystem.GemColors
 import com.gemosto.core.designsystem.GemostoTheme
 import com.gemosto.domain.model.ExerciseLevel
@@ -67,6 +70,7 @@ fun HomeScreen(
     onStartScan: () -> Unit = {},
     onOpenProgram: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
+    onOpenGemo: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -123,6 +127,10 @@ fun HomeScreen(
 
         Spacer(Modifier.height(12.dp))
 
+        GemoCard(onClick = onOpenGemo)
+
+        Spacer(Modifier.height(12.dp))
+
         // ─── Card 3: Riwayat ROM Terbaru ──────────────────────────
         if (state.latestRom != null) {
             HistoryCard(
@@ -139,6 +147,56 @@ fun HomeScreen(
         )
 
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Card: Gemo AI
+// ─────────────────────────────────────────────────────────────────
+
+@Composable
+private fun GemoCard(onClick: () -> Unit) {
+    CardShell(
+        borderColor = GemColors.Border,
+        onClick = onClick,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = GemColors.EmeraldLight,
+                modifier = Modifier.size(40.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Outlined.ChatBubbleOutline,
+                        contentDescription = null,
+                        tint = GemColors.EmeraldDark,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.gemo_home_card_title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.gemo_home_card_body),
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                )
+            }
+            Icon(
+                imageVector = Icons.Outlined.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

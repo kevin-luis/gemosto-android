@@ -37,6 +37,7 @@ import com.gemosto.core.designsystem.GemColors
 import com.gemosto.domain.model.UserProfile
 import com.gemosto.feature.account.AccountTabScreen
 import com.gemosto.feature.exercise.ExerciseTabScreen
+import com.gemosto.feature.gemo.GemoChatScreen
 import com.gemosto.feature.history.HistoryTabScreen
 import com.gemosto.feature.home.HomeScreen
 import com.gemosto.feature.scan.ScanTabScreen
@@ -56,24 +57,40 @@ fun MainScaffold(
     onSignOut: () -> Unit,
 ) {
     var currentTab by rememberSaveable { mutableStateOf(MainTab.HOME) }
+    var showGemoChat by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         bottomBar = {
             GemBottomBar(
                 selected = currentTab,
-                onTabSelected = { currentTab = it },
+                onTabSelected = {
+                    currentTab = it
+                    if (it != MainTab.HOME) {
+                        showGemoChat = false
+                    }
+                },
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         when (currentTab) {
-            MainTab.HOME -> HomeScreen(
-                profile = profile,
-                paddingValues = padding,
-                onStartScan = { currentTab = MainTab.SCAN },
-                onOpenProgram = { currentTab = MainTab.EXERCISE },
-                onOpenHistory = { currentTab = MainTab.HISTORY },
-            )
+            MainTab.HOME -> {
+                if (showGemoChat) {
+                    GemoChatScreen(
+                        paddingValues = padding,
+                        onBack = { showGemoChat = false },
+                    )
+                } else {
+                    HomeScreen(
+                        profile = profile,
+                        paddingValues = padding,
+                        onStartScan = { currentTab = MainTab.SCAN },
+                        onOpenProgram = { currentTab = MainTab.EXERCISE },
+                        onOpenHistory = { currentTab = MainTab.HISTORY },
+                        onOpenGemo = { showGemoChat = true },
+                    )
+                }
+            }
             MainTab.EXERCISE -> ExerciseTabScreen(
                 paddingValues = padding,
                 onGoToScan = { currentTab = MainTab.SCAN },
