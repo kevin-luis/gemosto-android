@@ -64,6 +64,22 @@ fun RomHistoryScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
+    RomHistoryContent(
+        paddingValues = paddingValues,
+        state = state,
+        onStartScan = onStartScan,
+        onResultClick = onResultClick,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RomHistoryContent(
+    paddingValues: PaddingValues = PaddingValues(0.dp),
+    state: HistoryUiState,
+    onStartScan: () -> Unit = {},
+    onResultClick: (String) -> Unit = {},
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -100,6 +116,74 @@ fun RomHistoryScreen(
         }
     }
 }
+
+@Preview(showSystemUi = true, name = "History list")
+@Composable
+private fun RomHistoryListPreview() {
+    GemostoTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            RomHistoryContent(
+                state = HistoryUiState(
+                    isLoading = false,
+                    items = listOf(
+                        previewHistoryRom("rom-1", 132f, 4f, RomCategory.NORMAL, daysAgo = 2),
+                        previewHistoryRom("rom-2", 108f, 10f, RomCategory.MILD, daysAgo = 9),
+                        previewHistoryRom("rom-3", 92f, 17f, RomCategory.MODERATE, daysAgo = 16),
+                    ),
+                ),
+                onStartScan = {},
+                onResultClick = {},
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true, name = "History empty")
+@Composable
+private fun RomHistoryEmptyPreview() {
+    GemostoTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            RomHistoryContent(
+                state = HistoryUiState(isLoading = false, items = emptyList()),
+                onStartScan = {},
+                onResultClick = {},
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true, name = "History loading")
+@Composable
+private fun RomHistoryLoadingPreview() {
+    GemostoTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            RomHistoryContent(
+                state = HistoryUiState(isLoading = true, items = emptyList()),
+                onStartScan = {},
+                onResultClick = {},
+            )
+        }
+    }
+}
+
+private fun previewHistoryRom(
+    id: String,
+    flexion: Float,
+    extensionLag: Float,
+    category: RomCategory,
+    daysAgo: Int,
+) = RomResult(
+    id = id,
+    userId = "preview-user",
+    timestampMs = System.currentTimeMillis() - daysAgo * 24 * 60 * 60 * 1000L,
+    kneeSide = KneeSide.RIGHT,
+    maxFlexionDeg = flexion,
+    maxExtensionLagDeg = extensionLag,
+    category = category,
+    sessionDurationMs = 12000L,
+    deviceModel = "Preview",
+    mediaPipeModel = "preview",
+)
 
 @Composable
 private fun EmptyHistoryState(onStartScan: () -> Unit) {

@@ -98,7 +98,7 @@ fun ProfileSetupScreen(
 }
 
 @Composable
-private fun ProfileSetupContent(
+internal fun ProfileSetupContent(
     state: ProfileSetupUiState,
     paddingValues: PaddingValues,
     onNameChange: (String) -> Unit,

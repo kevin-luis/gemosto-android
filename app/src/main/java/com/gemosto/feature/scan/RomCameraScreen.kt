@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview as ComposePreview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
@@ -59,6 +60,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gemosto.R
 import com.gemosto.core.designsystem.GemColors
+import com.gemosto.core.designsystem.GemostoTheme
 import com.gemosto.data.pose.PoseDetector
 import com.gemosto.domain.model.KneeSide
 import org.koin.compose.koinInject
@@ -776,6 +778,68 @@ private fun OpenSettingsScreen(onCancel: () -> Unit) {
             modifier = Modifier
                 .clickable(onClick = onCancel)
                 .padding(12.dp),
+        )
+    }
+}
+
+@ComposePreview(showSystemUi = true, name = "Camera overlay - active")
+@Composable
+private fun RomCameraActiveOverlayPreview() {
+    GemostoTheme {
+        RomCameraOverlayContent(
+            state = ScanUiState(
+                selectedKneeSide = KneeSide.RIGHT,
+                currentAngleDeg = 142.4f,
+                currentFlexionDeg = 37.6f,
+                poseQuality = PoseQuality.Good,
+                phase = SessionPhase.EXTENSION,
+                phaseRemainingSeconds = 7,
+            ),
+            kneeSideLabel = "Kanan",
+        )
+    }
+}
+
+@ComposePreview(showSystemUi = true, name = "Camera permission")
+@Composable
+private fun RomCameraPermissionPreview() {
+    GemostoTheme {
+        PermissionRationale(
+            onRequest = {},
+            onCancel = {},
+        )
+    }
+}
+
+@Composable
+internal fun RomCameraOverlayContent(
+    state: ScanUiState,
+    kneeSideLabel: String,
+    paddingValues: PaddingValues = PaddingValues(0.dp),
+    onClose: () -> Unit = {},
+    onStartSession: () -> Unit = {},
+    onCancelSession: () -> Unit = {},
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+    ) {
+        TopOverlay(
+            kneeSideLabel = kneeSideLabel,
+            poseQuality = state.poseQuality,
+            onClose = onClose,
+        )
+        AngleIndicator(
+            interiorAngleDeg = state.currentAngleDeg,
+            flexionDeg = state.currentFlexionDeg,
+            poseQuality = state.poseQuality,
+        )
+        SessionBottomPanel(
+            state = state,
+            paddingValues = paddingValues,
+            onStartSession = onStartSession,
+            onCancelSession = onCancelSession,
         )
     }
 }

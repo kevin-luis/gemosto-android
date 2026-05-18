@@ -70,8 +70,30 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val nowMs = System.currentTimeMillis()
 
+    HomeContent(
+        profile = profile,
+        state = state,
+        paddingValues = paddingValues,
+        nowMs = System.currentTimeMillis(),
+        onStartScan = onStartScan,
+        onOpenProgram = onOpenProgram,
+        onOpenHistory = onOpenHistory,
+        onDismissPainWarning = viewModel::dismissPainWarning,
+    )
+}
+
+@Composable
+internal fun HomeContent(
+    profile: UserProfile,
+    state: HomeUiState,
+    paddingValues: PaddingValues = PaddingValues(0.dp),
+    nowMs: Long = System.currentTimeMillis(),
+    onStartScan: () -> Unit = {},
+    onOpenProgram: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
+    onDismissPainWarning: () -> Unit = {},
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -101,7 +123,7 @@ fun HomeScreen(
 
         if (state.showPainWarning) {
             PainWarningBanner(
-                onDismiss = { viewModel.dismissPainWarning() }
+                onDismiss = onDismissPainWarning
             )
             Spacer(Modifier.height(16.dp))
         }

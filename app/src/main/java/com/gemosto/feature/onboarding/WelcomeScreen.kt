@@ -74,7 +74,7 @@ fun WelcomeScreen(
 }
 
 @Composable
-private fun WelcomeContent(
+internal fun WelcomeContent(
     isLoading: Boolean,
     paddingValues: PaddingValues,
     onSignInClick: () -> Unit,

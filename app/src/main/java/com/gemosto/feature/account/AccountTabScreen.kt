@@ -27,6 +27,8 @@ import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -45,9 +47,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gemosto.core.designsystem.GemColors
+import com.gemosto.core.designsystem.GemostoTheme
+import com.gemosto.domain.model.ActivityLevel
+import com.gemosto.domain.model.KneeSide
 import com.gemosto.domain.model.UserProfile
 import org.koin.androidx.compose.koinViewModel
 
@@ -63,6 +69,7 @@ fun AccountTabScreen(
     viewModel: AccountViewModel = koinViewModel()
 ) {
     var currentRoute by remember { mutableStateOf(AccountRoute.MAIN) }
+    val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
 
     BackHandler(enabled = currentRoute != AccountRoute.MAIN) {
         currentRoute = AccountRoute.MAIN
@@ -74,7 +81,10 @@ fun AccountTabScreen(
             paddingValues = paddingValues,
             onNavigate = { currentRoute = it },
             onSignOut = onSignOut,
-            viewModel = viewModel
+            deleteState = deleteState,
+            onSignOutClick = viewModel::signOut,
+            onDeleteAccount = viewModel::deleteAccount,
+            onConsumeDeleteState = viewModel::consumeDeleteState,
         )
         AccountRoute.EDIT_PROFILE -> ProfileEditScreen(
             profile = profile,
@@ -87,26 +97,28 @@ fun AccountTabScreen(
 }
 
 @Composable
-private fun AccountMainScreen(
+internal fun AccountMainScreen(
     profile: UserProfile,
     paddingValues: PaddingValues,
     onNavigate: (AccountRoute) -> Unit,
     onSignOut: () -> Unit,
-    viewModel: AccountViewModel
+    deleteState: DeleteAccountState,
+    onSignOutClick: (() -> Unit) -> Unit,
+    onDeleteAccount: () -> Unit,
+    onConsumeDeleteState: () -> Unit,
 ) {
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showDeleteStep1 by remember { mutableStateOf(false) }
     var showDeleteStep2 by remember { mutableStateOf(false) }
     var deleteConfirmationText by remember { mutableStateOf("") }
-    val deleteState by viewModel.deleteState.collectAsStateWithLifecycle()
 
     LaunchedEffect(deleteState) {
         if (deleteState is DeleteAccountState.Success) {
-            viewModel.consumeDeleteState()
+            onConsumeDeleteState()
             onSignOut() // Using onSignOut to clear local user state and redirect to welcome
         } else if (deleteState is DeleteAccountState.NeedsReAuth) {
             // Handle re-auth if needed
-            viewModel.consumeDeleteState()
+            onConsumeDeleteState()
         }
     }
 
@@ -163,7 +175,7 @@ private fun AccountMainScreen(
             }
         }
 
-        Divider(color = GemColors.Border)
+        HorizontalDivider(Modifier, DividerDefaults.Thickness, color = GemColors.Border)
 
         // Section 2: Menu List
         Column(modifier = Modifier.padding(vertical = 8.dp)) {
@@ -235,7 +247,7 @@ private fun AccountMainScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showSignOutDialog = false
-                    viewModel.signOut(onComplete = onSignOut)
+                    onSignOutClick(onSignOut)
                 }) {
                     Text("Ya, Keluar", color = GemColors.Danger)
                 }
@@ -297,7 +309,7 @@ private fun AccountMainScreen(
             },
             confirmButton = {
                 TextButton(
-                    onClick = { viewModel.deleteAccount() },
+                    onClick = onDeleteAccount,
                     enabled = deleteConfirmationText == "HAPUS" && deleteState !is DeleteAccountState.Loading
                 ) {
                     if (deleteState is DeleteAccountState.Loading) {
@@ -311,7 +323,7 @@ private fun AccountMainScreen(
                 TextButton(onClick = { 
                     showDeleteStep2 = false
                     deleteConfirmationText = ""
-                    viewModel.consumeDeleteState()
+                    onConsumeDeleteState()
                 }) {
                     Text("Batal", color = GemColors.TextPrimary)
                 }
@@ -319,6 +331,38 @@ private fun AccountMainScreen(
         )
     }
 }
+
+@Preview(showSystemUi = true, name = "Account")
+@Composable
+private fun AccountMainScreenPreview() {
+    GemostoTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            AccountMainScreen(
+                profile = previewAccountProfile,
+                paddingValues = PaddingValues(0.dp),
+                onNavigate = {},
+                onSignOut = {},
+                deleteState = DeleteAccountState.Idle,
+                onSignOutClick = { it() },
+                onDeleteAccount = {},
+                onConsumeDeleteState = {},
+            )
+        }
+    }
+}
+
+private val previewAccountProfile = UserProfile(
+    uid = "preview-user",
+    name = "Kevin Banamtuan",
+    email = "kevin@example.com",
+    photoUrl = null,
+    age = 45,
+    affectedKnee = KneeSide.RIGHT,
+    activityLevel = ActivityLevel.MODERATE,
+    disclaimerAcceptedAt = 1L,
+    createdAt = 1L,
+    updatedAt = 1L,
+)
 
 @Composable
 private fun AccountMenuItem(
