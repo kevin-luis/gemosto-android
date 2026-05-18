@@ -542,6 +542,32 @@ private fun ProgramBlockedPreview() {
     }
 }
 
+@Preview(showSystemUi = true, name = "Empty")
+@Composable
+private fun ProgramEmptyPreview() {
+    GemostoTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            ProgramEmptyState(
+                paddingValues = PaddingValues(0.dp),
+                title = "Belum Ada Program",
+                body = "Lakukan Scan ROM dulu untuk mendapatkan rekomendasi latihan personal.",
+                primaryCtaLabel = "Mulai Scan ROM",
+                onPrimaryCta = {},
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true, name = "Loading")
+@Composable
+private fun ProgramLoadingPreview() {
+    GemostoTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            ProgramLoadingState(paddingValues = PaddingValues(0.dp))
+        }
+    }
+}
+
 private fun previewProgram(
     level: ExerciseLevel,
     cat: RomCategory,

@@ -2,6 +2,8 @@ package com.gemosto.feature.scan
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -9,7 +11,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gemosto.core.designsystem.GemostoTheme
+import com.gemosto.domain.model.KneeSide
 import com.gemosto.domain.model.UserProfile
 import com.gemosto.feature.exercise.ProgramViewModel
 import com.gemosto.feature.result.RomResultScreen
@@ -123,3 +129,18 @@ private fun scanFlowSaver(): Saver<ScanFlowState, Any> = Saver(
         }
     },
 )
+
+@Preview(showSystemUi = true, name = "Scan tab - intro")
+@Composable
+private fun ScanTabIntroPreview() {
+    GemostoTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            ScanIntroScreen(
+                paddingValues = PaddingValues(0.dp),
+                selectedKneeSide = KneeSide.RIGHT,
+                onKneeSelected = {},
+                onReadyClick = {},
+            )
+        }
+    }
+}

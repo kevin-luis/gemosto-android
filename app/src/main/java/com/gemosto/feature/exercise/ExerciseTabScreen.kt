@@ -3,6 +3,8 @@ package com.gemosto.feature.exercise
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -11,7 +13,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.gemosto.core.designsystem.GemostoTheme
+import com.gemosto.domain.exercise.ExerciseCatalog
+import com.gemosto.domain.exercise.ExerciseId
+import com.gemosto.domain.model.ExerciseLevel
+import com.gemosto.domain.model.ExerciseNarrative
+import com.gemosto.domain.model.ExerciseProgram
+import com.gemosto.domain.model.NarrativeSource
+import com.gemosto.domain.model.ProgramStatus
+import com.gemosto.domain.model.RomCategory
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -175,3 +188,60 @@ private fun ProgramOrEmptyState(
         }
     }
 }
+
+@Preview(showSystemUi = true, name = "Exercise tab - program")
+@Composable
+private fun ExerciseTabProgramPreview() {
+    GemostoTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            ProgramOrEmptyState(
+                paddingValues = PaddingValues(0.dp),
+                program = previewExerciseTabProgram,
+                isProgramLoading = false,
+                genState = GenerateState.Idle,
+                onStartSession = {},
+                onGoToScan = {},
+            )
+        }
+    }
+}
+
+@Preview(showSystemUi = true, name = "Exercise tab - empty")
+@Composable
+private fun ExerciseTabEmptyPreview() {
+    GemostoTheme {
+        Surface(color = MaterialTheme.colorScheme.background) {
+            ProgramOrEmptyState(
+                paddingValues = PaddingValues(0.dp),
+                program = null,
+                isProgramLoading = false,
+                genState = GenerateState.Idle,
+                onStartSession = {},
+                onGoToScan = {},
+            )
+        }
+    }
+}
+
+private val previewExerciseTabProgram = ExerciseProgram(
+    id = "preview-program",
+    userId = "preview-user",
+    generatedAt = 1L,
+    basedOnRomId = "preview-rom",
+    romCategory = RomCategory.MODERATE,
+    level = ExerciseLevel.GENTLE,
+    durationWeeks = 4,
+    frequencyPerWeek = "3x/minggu",
+    exercises = listOf(
+        ExerciseCatalog.get(ExerciseId.QUAD_SETS),
+        ExerciseCatalog.get(ExerciseId.HEEL_SLIDES),
+        ExerciseCatalog.get(ExerciseId.ANKLE_PUMPS),
+    ),
+    narrative = ExerciseNarrative(
+        intro = "Program ringan ini disusun agar lutut Anda bergerak bertahap.",
+        rationale = "ROM Anda berada pada kategori sedang, sehingga latihan low-impact lebih sesuai untuk memulai.",
+        weeklyMotivation = "Mulai perlahan dan catat respons nyeri setelah latihan.",
+        source = NarrativeSource.FALLBACK_STATIC,
+    ),
+    status = ProgramStatus.ACTIVE,
+)
