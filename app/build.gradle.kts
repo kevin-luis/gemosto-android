@@ -4,11 +4,13 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.secrets)
+    id("com.android.compose.screenshot") version "0.0.1-alpha14"
 }
 
 android {
     namespace = "com.gemosto"
     compileSdk = libs.versions.compileSdk.get().toInt()
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 
     defaultConfig {
         applicationId = "com.gemosto"
@@ -120,4 +122,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    screenshotTestImplementation(libs.androidx.compose.ui.tooling)
+    screenshotTestImplementation(libs.screenshot.validation.api) {
+        exclude(group = "org.jetbrains.kotlin")
+    }
 }

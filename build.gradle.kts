@@ -7,3 +7,9 @@ plugins {
     alias(libs.plugins.google.services) apply false
     alias(libs.plugins.secrets) apply false
 }
+
+tasks.register("recordDebugScreenshotTest") {
+    group = "verification"
+    description = "Alias for the Compose screenshot plugin debug baseline update task."
+    dependsOn(":app:updateDebugScreenshotTest")
+}
