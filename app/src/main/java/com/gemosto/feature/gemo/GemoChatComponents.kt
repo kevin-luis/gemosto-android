@@ -28,8 +28,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.gemosto.R
 import com.gemosto.core.designsystem.GemColors
+import com.gemosto.domain.gemo.GemoChatAuthor
+import com.gemosto.domain.gemo.GemoChatMessage
 import com.gemosto.domain.gemo.ResponseType
 import com.gemosto.domain.gemo.SuggestedQuestion
+import dev.jeziellago.compose.markdowntext.MarkdownText
 
 @Composable
 internal fun GemoDisclaimerBanner() {
@@ -142,8 +145,8 @@ internal fun GemoMessageBubble(message: GemoChatMessage) {
                 if (message.author == GemoChatAuthor.GEMO) {
                     ResponseTypeLabel(type = message.responseType)
                 }
-                Text(
-                    text = message.text,
+                MarkdownText(
+                    markdown = message.text,
                     style = MaterialTheme.typography.bodyMedium.copy(color = textColor),
                 )
                 if (
@@ -197,3 +200,4 @@ private fun ResponseTypeLabel(type: ResponseType?) {
         -> Unit
     }
 }
+

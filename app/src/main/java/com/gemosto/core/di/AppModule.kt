@@ -1,5 +1,6 @@
 package com.gemosto.core.di
 
+import com.gemosto.BuildConfig
 import com.gemosto.R
 import com.gemosto.core.common.DefaultDispatcherProvider
 import com.gemosto.core.common.DispatcherProvider
@@ -14,10 +15,14 @@ import com.gemosto.data.firestore.PainLogRepository
 import com.gemosto.data.firestore.FirestorePainLogRepository
 import com.gemosto.data.firestore.ProfileRepository
 import com.gemosto.data.firestore.RomRepository
+import com.gemosto.data.firestore.GemoSessionRepository
+import com.gemosto.data.firestore.FirestoreGemoSessionRepository
 import com.gemosto.data.llm.GeminiGemoService
 import com.gemosto.data.llm.GeminiNarrativeService
+import com.gemosto.data.llm.FakeGemoResponseProvider
 import com.gemosto.data.llm.GemoAiRepository
 import com.gemosto.data.llm.GemoAiRepositoryImpl
+import com.gemosto.data.llm.GemoResponseProvider
 import com.gemosto.data.pose.PoseDetector
 import com.gemosto.data.prefs.UserPrefs
 import com.gemosto.domain.exercise.ExerciseRuleEngine
@@ -67,8 +72,15 @@ val appModule = module {
     single { UserPrefs(androidContext()) }
     single { PoseDetector() }
     single { GeminiNarrativeService() }
-    single { GeminiGemoService() }
+    single<GemoResponseProvider> {
+        if (BuildConfig.GEMO_USE_FAKE_PROVIDER) {
+            FakeGemoResponseProvider()
+        } else {
+            GeminiGemoService()
+        }
+    }
     single<GemoAiRepository> { GemoAiRepositoryImpl(get()) }
+    single<GemoSessionRepository> { FirestoreGemoSessionRepository(get(), get()) }
 
     // ─── Domain (pure Kotlin) ────────────────────────────────
     factory { ExerciseRuleEngine() }
@@ -112,6 +124,7 @@ val appModule = module {
     viewModel {
         GemoChatViewModel(
             gemoAiRepository = get(),
+            gemoSessionRepository = get(),
             initialSuggestedQuestions = listOf(
                 SuggestedQuestion(
                     text = androidContext().getString(R.string.gemo_suggested_question_oa_basics),

@@ -77,4 +77,26 @@ class GeminiGemoServiceTest {
         assertTrue(response.answer.isNotBlank())
         assertTrue(GemoAiResponseValidator.isValid(response))
     }
+
+    @Test
+    fun `model candidates keep only primary and backup live models`() {
+        assertEquals(
+            listOf("gemini-2.5-flash", "gemini-2.5-flash-lite"),
+            GeminiGemoService.modelCandidates(
+                primaryModel = "gemini-2.5-flash",
+                backupModel = "gemini-2.5-flash-lite",
+            ),
+        )
+    }
+
+    @Test
+    fun `model candidates remove duplicates and blanks`() {
+        assertEquals(
+            listOf("gemini-2.5-flash"),
+            GeminiGemoService.modelCandidates(
+                primaryModel = "gemini-2.5-flash",
+                backupModel = "gemini-2.5-flash",
+            ),
+        )
+    }
 }

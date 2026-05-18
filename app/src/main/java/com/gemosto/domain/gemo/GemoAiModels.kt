@@ -65,3 +65,28 @@ object GemoAiDisclaimers {
     const val URGENT =
         "Gemo bisa keliru, tetapi gejala seperti ini perlu dinilai tenaga medis segera."
 }
+
+/**
+ * Arah pesan pada sesi chat Gemo AI.
+ */
+enum class GemoChatAuthor {
+    USER,
+    GEMO,
+}
+
+/**
+ * Satu pesan dalam sesi chat.
+ *
+ * Metadata respons hanya diisi untuk pesan dari Gemo supaya UI nanti bisa
+ * membedakan education/refusal/escalation tanpa mengurai ulang teks jawaban.
+ */
+data class GemoChatMessage(
+    val id: String,
+    val author: GemoChatAuthor,
+    val text: String,
+    val responseType: ResponseType? = null,
+    val riskLevel: RiskLevel? = null,
+    val disclaimer: String? = null,
+    val recommendedAction: RecommendedAction? = null,
+    val timestamp: Long = System.currentTimeMillis()
+)

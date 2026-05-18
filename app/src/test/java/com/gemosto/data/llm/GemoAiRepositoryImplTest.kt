@@ -19,8 +19,8 @@ import org.junit.Test
 
 class GemoAiRepositoryImplTest {
 
-    private val geminiGemoService = mockk<GeminiGemoService>()
-    private val repository = GemoAiRepositoryImpl(geminiGemoService)
+    private val responseProvider = mockk<GemoResponseProvider>()
+    private val repository = GemoAiRepositoryImpl(responseProvider)
 
     @Before
     fun setUp() {
@@ -41,7 +41,7 @@ class GemoAiRepositoryImplTest {
             "Gemo tetap hanya membantu seputar osteoartritis lutut dan kesehatan yang berkaitan langsung dengannya.",
             response.answer,
         )
-        coVerify(exactly = 0) { geminiGemoService.generate(any()) }
+        coVerify(exactly = 0) { responseProvider.generate(any(), any()) }
     }
 
     @Test
@@ -50,23 +50,27 @@ class GemoAiRepositoryImplTest {
 
         assertEquals(ScopeStatus.OUT_OF_SCOPE, response.scopeStatus)
         assertEquals(ResponseType.REFUSAL, response.responseType)
-        coVerify(exactly = 0) { geminiGemoService.generate(any()) }
+        coVerify(exactly = 0) { responseProvider.generate(any(), any()) }
     }
 
     @Test
     fun `candidate in scope request is delegated to gemini`() = runTest {
         val expected = validEducationResponse()
-        coEvery { geminiGemoService.generate("Apa itu osteoartritis lutut?") } returns expected
+        coEvery {
+            responseProvider.generate("Apa itu osteoartritis lutut?", emptyList())
+        } returns expected
 
         val response = repository.generateResponse("Apa itu osteoartritis lutut?")
 
         assertEquals(expected, response)
-        coVerify(exactly = 1) { geminiGemoService.generate("Apa itu osteoartritis lutut?") }
+        coVerify(exactly = 1) {
+            responseProvider.generate("Apa itu osteoartritis lutut?", emptyList())
+        }
     }
 
     @Test
     fun `invalid gemini response falls back safely`() = runTest {
-        coEvery { geminiGemoService.generate(any()) } returns
+        coEvery { responseProvider.generate(any(), any()) } returns
             validEducationResponse().copy(disclaimer = "")
 
         val response = repository.generateResponse("Apa itu OA lutut?")

@@ -1,6 +1,7 @@
 package com.gemosto.data.llm
 
 import com.gemosto.domain.gemo.GemoAiResponse
+import com.gemosto.domain.gemo.GemoChatMessage
 
 /**
  * Abstraksi jalur chat Gemo AI untuk feature layer.
@@ -10,5 +11,8 @@ import com.gemosto.domain.gemo.GemoAiResponse
  */
 interface GemoAiRepository {
 
-    suspend fun generateResponse(userMessage: String): GemoAiResponse
+    suspend fun generateResponse(
+        userMessage: String,
+        history: List<GemoChatMessage> = emptyList()
+    ): GemoAiResponse
 }

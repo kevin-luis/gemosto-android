@@ -1,4 +1,4 @@
-package com.gemosto.data.llm
+﻿package com.gemosto.data.llm
 
 import android.util.Log
 import com.gemosto.BuildConfig
@@ -9,6 +9,8 @@ import com.gemosto.domain.gemo.RecommendedAction
 import com.gemosto.domain.gemo.ResponseType
 import com.gemosto.domain.gemo.RiskLevel
 import com.gemosto.domain.gemo.ScopeStatus
+import com.gemosto.domain.gemo.GemoChatAuthor
+import com.gemosto.domain.gemo.GemoChatMessage
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.Schema
 import com.google.ai.client.generativeai.type.content
@@ -29,34 +31,56 @@ import kotlinx.coroutines.withTimeout
  * Orkestrasi prefilter lokal sengaja berada di layer repository (Section 4),
  * sehingga service ini hanya menangani jalur yang memang sudah layak dikirim ke Gemini.
  */
-class GeminiGemoService {
+class GeminiGemoService : GemoResponseProvider {
 
-    suspend fun generate(userMessage: String): GemoAiResponse {
+    override suspend fun generate(
+        userMessage: String,
+        history: List<GemoChatMessage>,
+    ): GemoAiResponse {
         val apiKey = BuildConfig.GEMINI_API_KEY
         if (apiKey.isBlank()) {
-            Log.w(TAG, "GEMINI_API_KEY kosong — pakai fallback aman")
+            Log.w(TAG, "GEMINI_API_KEY kosong â€” pakai fallback aman")
             return fallbackResponse()
         }
 
-        return try {
-            withTimeout(TIMEOUT_MS) {
-                callGemini(userMessage, apiKey)
+        val modelsToTry = modelCandidates(
+            primaryModel = BuildConfig.GEMINI_MODEL,
+            backupModel = BuildConfig.GEMINI_BACKUP_MODEL,
+        )
+
+        var lastError: Throwable? = null
+
+        for (modelName in modelsToTry) {
+            try {
+                return withTimeout(TIMEOUT_MS) {
+                    callGemini(userMessage, history, apiKey, modelName)
+                }
+            } catch (e: TimeoutCancellationException) {
+                Log.w(TAG, "Gemini Gemo timeout pada model $modelName setelah ${TIMEOUT_MS}ms â€” mencoba model berikutnya")
+                lastError = e
+            } catch (e: Throwable) {
+                if (shouldTryNextModel(e)) {
+                    Log.w(TAG, "Gemini Gemo gagal pada model $modelName â€” mencoba model berikutnya", e)
+                    lastError = e
+                } else {
+                    Log.e(TAG, "Gemini Gemo call gagal pada model $modelName â€” fallback aman", e)
+                    return fallbackResponse()
+                }
             }
-        } catch (e: TimeoutCancellationException) {
-            Log.w(TAG, "Gemini Gemo timeout setelah ${TIMEOUT_MS}ms — fallback")
-            fallbackResponse()
-        } catch (e: Throwable) {
-            Log.e(TAG, "Gemini Gemo call gagal — fallback", e)
-            fallbackResponse()
         }
+
+        Log.e(TAG, "Semua model gagal. Error terakhir: ${lastError?.message} â€” fallback quota exceeded")
+        return quotaExceededResponse()
     }
 
     private suspend fun callGemini(
         userMessage: String,
+        history: List<GemoChatMessage>,
         apiKey: String,
+        modelName: String,
     ): GemoAiResponse {
         val model = GenerativeModel(
-            modelName = BuildConfig.GEMINI_MODEL,
+            modelName = modelName,
             apiKey = apiKey,
             generationConfig = generationConfig {
                 responseMimeType = "application/json"
@@ -67,10 +91,17 @@ class GeminiGemoService {
             systemInstruction = content { text(FIXED_MODEL_INSTRUCTIONS) },
         )
 
-        Log.d(TAG, "Meminta respons Gemo untuk input ${userMessage.length} karakter")
+        Log.d(TAG, "Meminta respons Gemo untuk input ${userMessage.length} karakter, dengan ${history.size} pesan histori")
+
+        val recentHistory = history.takeLast(4).map { msg ->
+            val role = if (msg.author == GemoChatAuthor.USER) "user" else "model"
+            content(role = role) { text(msg.text) }
+        }
+
+        val chat = model.startChat(recentHistory)
 
         val response = retryOnce {
-            model.generateContent(userMessage)
+            chat.sendMessage(userMessage)
         }
 
         val rawText = response.text
@@ -87,7 +118,7 @@ class GeminiGemoService {
             val retryable = "429" in message || "503" in message || "RESOURCE_EXHAUSTED" in message
             if (!retryable) throw e
 
-            Log.w(TAG, "Gemini Gemo error transient: $message — retry sekali setelah 2s")
+            Log.w(TAG, "Gemini Gemo error transient: $message â€” retry sekali setelah 2s")
             delay(RETRY_DELAY_MS)
             block()
         }
@@ -95,9 +126,28 @@ class GeminiGemoService {
 
     companion object {
         private const val TAG = "GeminiGemo"
-        private const val TIMEOUT_MS = 8_000L
+        private const val TIMEOUT_MS = 15_000L
         private const val RETRY_DELAY_MS = 2_000L
-        private const val MAX_OUTPUT_TOKENS = 350
+        private const val MAX_OUTPUT_TOKENS = 600
+
+        internal fun modelCandidates(
+            primaryModel: String,
+            backupModel: String,
+        ): List<String> {
+            return listOf(primaryModel, backupModel)
+                .filter(String::isNotBlank)
+                .distinct()
+        }
+
+        private fun shouldTryNextModel(error: Throwable): Boolean {
+            val message = error.message.orEmpty()
+            return error.javaClass.simpleName == "QuotaExceededException" ||
+                "429" in message ||
+                "RESOURCE_EXHAUSTED" in message ||
+                "404" in message ||
+                "NOT_FOUND" in message ||
+                "not found" in message.lowercase()
+        }
 
         internal fun parseResponseJson(rawText: String): GemoAiResponse {
             val json = parseFlatStringJsonObject(rawText)
@@ -124,6 +174,17 @@ class GeminiGemoService {
                 riskLevel = RiskLevel.LOW,
                 responseType = ResponseType.REFUSAL,
                 answer = SAFE_FALLBACK_ANSWER,
+                disclaimer = GemoAiDisclaimers.DEFAULT,
+                recommendedAction = RecommendedAction.NONE,
+            )
+        }
+
+        internal fun quotaExceededResponse(): GemoAiResponse {
+            return GemoAiResponse(
+                scopeStatus = ScopeStatus.OUT_OF_SCOPE,
+                riskLevel = RiskLevel.LOW,
+                responseType = ResponseType.REFUSAL,
+                answer = QUOTA_EXCEEDED_ANSWER,
                 disclaimer = GemoAiDisclaimers.DEFAULT,
                 recommendedAction = RecommendedAction.NONE,
             )
@@ -183,8 +244,8 @@ class GeminiGemoService {
         }
 
         private val FIXED_MODEL_INSTRUCTIONS = """
-            Anda adalah Gemo AI, dipanggil “Gemo”, dengan moto:
-            “Asisten Kesehatan Lutut Anda”.
+            Anda adalah Gemo AI, dipanggil â€œGemoâ€, dengan moto:
+            â€œAsisten Kesehatan Lutut Andaâ€.
 
             Peran utama Anda adalah menjadi asisten edukasi kesehatan yang fokus pada:
             1. osteoartritis (OA) lutut,
@@ -196,15 +257,13 @@ class GeminiGemoService {
             Anda BUKAN dokter, BUKAN alat diagnosis, dan BUKAN pengganti pemeriksaan tenaga medis.
 
             ATURAN IDENTITAS:
-            - Nama Anda adalah “Gemo AI”.
-            - Panggilan natural Anda adalah “Gemo”.
-            - Jangan sering menyebut nama sendiri dalam setiap jawaban.
-            - Saat memperkenalkan diri, gunakan gaya ringkas:
-              “Halo, saya Gemo, Asisten Kesehatan Lutut Anda.”
+            - Nama Anda adalah â€œGemo AIâ€.
+            - Panggilan natural Anda adalah â€œGemoâ€.
+            - Jangan menyebut nama sendiri atau memberikan salam/greetings di awal jawaban. Anda sudah diperkenalkan di awal sesi oleh sistem, jadi langsung saja jawab ke inti pertanyaannya.
 
             ATURAN BAHASA DAN TONE:
             - Gunakan Bahasa Indonesia sederhana.
-            - Selalu sapa user dengan “Anda”.
+            - Selalu sapa user dengan â€œAndaâ€.
             - Nada hangat, empatik, tenang, dan tidak menggurui.
             - Gunakan kalimat pendek.
             - Hindari jargon medis; jika perlu memakai istilah medis, jelaskan secara singkat.
@@ -214,11 +273,12 @@ class GeminiGemoService {
             BATAS SCOPE:
             - Jawab hanya jika pertanyaan termasuk:
               a. OA lutut,
-              b. gejala umum OA lutut,
-              c. latihan / aktivitas yang relevan dengan OA lutut,
+              b. gejala umum OA lutut (misalnya: nyeri lutut, kaku pada lutut, bengkak),
+              c. latihan / aktivitas fisik yang relevan dengan OA lutut,
               d. manajemen gejala non-obat yang relevan dengan OA lutut,
-              e. topik kesehatan yang punya hubungan langsung dengan OA lutut.
-            - Jika pertanyaan jelas di luar scope, tolak dengan sopan dan arahkan kembali ke topik OA lutut.
+              e. topik kesehatan yang berkaitan langsung (termasuk kapan sebaiknya nyeri lutut diperiksa ke dokter).
+            - PENTING: Pertanyaan seperti "Bagaimana cara membantu mengurangi kaku pada lutut?", "Kapan nyeri lutut sebaiknya diperiksa ke dokter?", atau "Latihan ringan apa yang umumnya baik untuk OA lutut?" adalah IN_SCOPE. Anda harus memberikan jawaban edukasi, BUKAN menolaknya.
+            - Jika pertanyaan jelas di luar scope (misalnya politik, resep makanan), tolak dengan sopan dan arahkan kembali ke topik OA lutut.
             - Jika pertanyaan hanya tampak berkaitan tetapi sebenarnya topik umum, nilai isi aktual pertanyaannya, bukan bungkus katanya.
 
             BATAS MEDIS:
@@ -294,7 +354,7 @@ class GeminiGemoService {
                - Jawaban maksimal 3 kalimat singkat.
 
             6. Gaya jawaban normal:
-               - target 80–180 kata,
+               - target 80â€“180 kata,
                - maksimal 3 paragraf pendek,
                - gunakan bullet hanya jika membantu,
                - jangan membuat tabel.
@@ -307,11 +367,11 @@ class GeminiGemoService {
 
             8. Gaya disclaimer:
                - default:
-                 “Gemo bisa keliru, dan informasi ini bukan pengganti pemeriksaan dokter.”
+                 â€œGemo bisa keliru, dan informasi ini bukan pengganti pemeriksaan dokter.â€
                - untuk diagnosis/obat:
-                 “Gemo bisa keliru dan tidak dapat menggantikan pemeriksaan atau anjuran dokter.”
+                 â€œGemo bisa keliru dan tidak dapat menggantikan pemeriksaan atau anjuran dokter.â€
                - untuk urgent:
-                 “Gemo bisa keliru, tetapi gejala seperti ini perlu dinilai tenaga medis segera.”
+                 â€œGemo bisa keliru, tetapi gejala seperti ini perlu dinilai tenaga medis segera.â€
 
             9. Jika ragu antara menjawab atau menolak:
                - pilih jawaban yang lebih sempit, lebih aman, dan lebih eksplisit tentang batasan.
@@ -349,6 +409,9 @@ class GeminiGemoService {
         private const val SAFE_FALLBACK_ANSWER =
             "Maaf, Gemo belum bisa memberikan jawaban yang aman untuk pertanyaan itu. " +
                 "Gemo hanya membantu edukasi umum seputar osteoartritis lutut dan kesehatan yang berkaitan langsung dengannya."
+
+        private const val QUOTA_EXCEEDED_ANSWER =
+            "Maaf, batas penggunaan harian layanan Gemo telah tercapai. Silakan coba lagi nanti."
     }
 }
 
@@ -458,3 +521,4 @@ private class FlatStringJsonParser(
         require(index == source.length) { "Ada karakter tambahan setelah JSON object" }
     }
 }
+

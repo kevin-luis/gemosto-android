@@ -88,6 +88,15 @@ service cloud.firestore {
                       && request.resource.data.userId == uid;
         allow delete: if isOwner(uid);
       }
+
+      // Gemo Sessions subcollection
+      match /gemoSessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+        
+        match /messages/{messageId} {
+          allow read, write: if isOwner(uid);
+        }
+      }
     }
 
     // Default deny untuk path lain

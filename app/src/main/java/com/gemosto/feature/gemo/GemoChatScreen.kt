@@ -35,11 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.activity.compose.BackHandler
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gemosto.R
 import com.gemosto.core.designsystem.GemColors
 import com.gemosto.core.designsystem.GemostoTheme
 import com.gemosto.domain.gemo.GemoAiDisclaimers
+import com.gemosto.domain.gemo.GemoChatAuthor
+import com.gemosto.domain.gemo.GemoChatMessage
 import com.gemosto.domain.gemo.RecommendedAction
 import com.gemosto.domain.gemo.ResponseType
 import com.gemosto.domain.gemo.RiskLevel
@@ -53,6 +56,8 @@ fun GemoChatScreen(
     viewModel: GemoChatViewModel = koinViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    BackHandler(onBack = onBack)
 
     GemoChatContent(
         state = state,

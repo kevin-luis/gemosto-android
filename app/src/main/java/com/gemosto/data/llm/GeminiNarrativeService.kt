@@ -166,7 +166,7 @@ class GeminiNarrativeService {
     companion object {
         private const val TAG = "GeminiNarrative"
         private const val MODEL_NAME = "gemini-2.5-flash"
-        private const val TIMEOUT_MS = 8_000L
+        private const val TIMEOUT_MS = 15_000L
 
         private val SYSTEM_INSTRUCTION = """
             Anda adalah Gemosto, asisten edukasi kesehatan lutut.

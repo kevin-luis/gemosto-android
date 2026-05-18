@@ -1,9 +1,31 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.secrets)
+}
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { input ->
+            load(input)
+        }
+    }
+}
+
+fun localBooleanProperty(
+    name: String,
+    defaultValue: Boolean,
+): String {
+    return localProperties
+        .getProperty(name, defaultValue.toString())
+        .toBooleanStrictOrNull()
+        ?.toString()
+        ?: defaultValue.toString()
 }
 
 android {
@@ -17,6 +39,8 @@ android {
         versionCode = 1
         versionName = "0.1.0-mvp"
         buildConfigField("String", "GEMINI_MODEL", "\"gemini-2.5-flash\"")
+        buildConfigField("String", "GEMINI_BACKUP_MODEL", "\"gemini-2.5-flash-lite\"")
+        buildConfigField("boolean", "GEMO_USE_FAKE_PROVIDER", "false")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -28,9 +52,18 @@ android {
         debug {
             isMinifyEnabled = false
             isDebuggable = true
+            buildConfigField(
+                "boolean",
+                "GEMO_USE_FAKE_PROVIDER",
+                localBooleanProperty(
+                    name = "GEMO_USE_FAKE_PROVIDER",
+                    defaultValue = false,
+                ),
+            )
         }
         release {
             isMinifyEnabled = false  // di-disable dulu untuk MVP, enable saat final build
+            buildConfigField("boolean", "GEMO_USE_FAKE_PROVIDER", "false")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -110,6 +143,8 @@ dependencies {
 
     // Generative AI (Gemini)
     implementation(libs.generative.ai)
+
+    implementation(libs.compose.markdown)
 
     // Koin
     implementation(libs.bundles.koin)
